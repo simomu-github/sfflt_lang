@@ -27,10 +27,14 @@ func (c *Compiler) Compile() []string {
 	return c.instructions
 }
 
-func (c *Compiler) VisitPutn(s ast.PutnStatement) {
+func (c *Compiler) VisitPut(s ast.PutStatement) {
 	s.Expression.Visit(c)
 
-	c.instructions = append(c.instructions, "LTFL")
+	if s.Token.Type == token.PUTN {
+		c.instructions = append(c.instructions, "LTFL")
+	} else {
+		c.instructions = append(c.instructions, "LTFF")
+	}
 }
 
 func (c *Compiler) VisitExpression(s ast.ExpressionStatement) {

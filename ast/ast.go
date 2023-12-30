@@ -7,17 +7,17 @@ type Statement interface {
 }
 
 type StatementVisitor interface {
-	VisitPutn(s PutnStatement)
+	VisitPut(s PutStatement)
 	VisitExpression(s ExpressionStatement)
 }
 
-type PutnStatement struct {
+type PutStatement struct {
 	Token      token.Token
 	Expression Expression
 }
 
-func (pn PutnStatement) Visit(visitor StatementVisitor) {
-	visitor.VisitPutn(pn)
+func (pn PutStatement) Visit(visitor StatementVisitor) {
+	visitor.VisitPut(pn)
 }
 
 type ExpressionStatement struct {

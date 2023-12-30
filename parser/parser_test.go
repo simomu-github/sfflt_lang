@@ -222,22 +222,22 @@ func TestParseTerm(t *testing.T) {
 	}
 }
 
-func TestParsePutn(t *testing.T) {
+func TestParsePut(t *testing.T) {
 	input := "putn 1;"
 	lexer := lexer.New(input)
 	parser := New(lexer)
 	stmt := parser.ParseProgram()
 
-	putn, ok := stmt[0].(ast.PutnStatement)
+	put, ok := stmt[0].(ast.PutStatement)
 	if !ok {
-		t.Fatalf("Statement is not Putn")
+		t.Fatalf("Statement is not put")
 	}
 
-	if putn.Token.Type != token.PUTN {
+	if put.Token.Type != token.PUTN {
 		t.Fatalf("Token is not PUTN")
 	}
 
-	intLiteral, ok := putn.Expression.(ast.IntegerLiteral)
+	intLiteral, ok := put.Expression.(ast.IntegerLiteral)
 
 	if !ok {
 		t.Fatalf("Expression is not IntegerLiteral")

@@ -37,8 +37,9 @@ func (p *Parser) ParseProgram() []ast.Statement {
 }
 
 func (p *Parser) parseStatement() ast.Statement {
-	if p.currentToken.Type == token.PUTN {
-		return p.parsePutnStatement()
+	if p.currentToken.Type == token.PUTN ||
+		p.currentToken.Type == token.PUTC {
+		return p.parsePutStatement()
 	}
 
 	expr := p.parseExpression()
@@ -50,7 +51,7 @@ func (p *Parser) parseStatement() ast.Statement {
 	return ast.ExpressionStatement{Expression: expr}
 }
 
-func (p *Parser) parsePutnStatement() ast.Statement {
+func (p *Parser) parsePutStatement() ast.Statement {
 	tok := p.currentToken
 	p.nextToken()
 	expr := p.parseExpression()
@@ -59,7 +60,7 @@ func (p *Parser) parsePutnStatement() ast.Statement {
 	}
 	p.nextToken()
 
-	return ast.PutnStatement{Token: tok, Expression: expr}
+	return ast.PutStatement{Token: tok, Expression: expr}
 }
 
 func (p *Parser) parseExpression() ast.Expression {

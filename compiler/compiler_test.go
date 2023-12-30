@@ -106,7 +106,7 @@ func TestCompileTerm(t *testing.T) {
 }
 
 func TestCompilePut(t *testing.T) {
-	input := "putn -1;"
+	input := "putn -1; putc 'a';"
 	lexer := lexer.New(input)
 	parser := parser.New(lexer)
 	exprs := parser.ParseProgram()
@@ -118,6 +118,8 @@ func TestCompilePut(t *testing.T) {
 		"FFFLT",
 		"LFFT",
 		"LTFL",
+		"FFFLLFFFFLT",
+		"LTFF",
 	}
 
 	for i, expect := range expects {
