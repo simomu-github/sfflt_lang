@@ -37,12 +37,13 @@ func (p *Parser) ParseProgram() []ast.Expression {
 
 func (p *Parser) parseFactor() ast.Expression {
 	expr := p.parseUnary()
-	p.nextToken()
-	switch p.currentToken.Type {
+	switch p.peekToken.Type {
 	case token.ASTERISK, token.SLASH:
+		p.nextToken()
 		operator := p.currentToken
 		p.nextToken()
-		return ast.Factor{Left: expr, Operator: operator, Right: p.parseUnary()}
+		right := p.parseUnary()
+		return ast.Factor{Left: expr, Operator: operator, Right: right}
 	}
 
 	return expr
