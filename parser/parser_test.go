@@ -146,7 +146,7 @@ func TestParseFactor(t *testing.T) {
 }
 
 func TestParseTerm(t *testing.T) {
-	input := "2 + -3"
+	input := "(4 - 3) * (2 + 1)"
 	lexer := lexer.New(input)
 	parser := New(lexer)
 	exps := parser.ParseProgram()
@@ -157,37 +157,63 @@ func TestParseTerm(t *testing.T) {
 		t.Fatalf("Not Binary")
 	}
 
-	if binary.Operator.Type != token.PLUS {
-		t.Fatalf("Operator not PLUS")
+	if binary.Operator.Type != token.ASTERISK {
+		t.Fatalf("Operator not ASTERISK get: %s", binary.Operator.Type)
 	}
 
-	left, ok := binary.Left.(ast.IntegerLiteral)
+	left, ok := binary.Left.(ast.Binary)
 
 	if !ok {
-		t.Fatalf("Left expression does not IntegerLiteral")
+		t.Fatalf("Left expression does not Binary")
 	}
 
-	if left.Value != 2 {
-		t.Fatalf("Left expression does not match")
+	if left.Operator.Type != token.MINUS {
+		t.Fatalf("Left expression operator type does not match")
 	}
 
-	right, ok := binary.Right.(ast.Unary)
+	ll, ok := left.Left.(ast.IntegerLiteral)
+	if !ok {
+		t.Fatalf("Left left expression does not IntegerLiteral")
+	}
+
+	if ll.Value != 4 {
+		t.Fatalf("Left left expression value does not match")
+	}
+
+	lr, ok := left.Right.(ast.IntegerLiteral)
+	if !ok {
+		t.Fatalf("Left left expression does not IntegerLiteral")
+	}
+
+	if lr.Value != 3 {
+		t.Fatalf("Left left expression value does not match")
+	}
+
+	right, ok := binary.Right.(ast.Binary)
 
 	if !ok {
-		t.Fatalf("Right expression does not Unary %q", binary.Right)
+		t.Fatalf("Right expression does not Binary")
 	}
 
-	if right.Operator.Type != token.MINUS {
-		t.Fatalf("TokenType not MINUS")
+	if right.Operator.Type != token.PLUS {
+		t.Fatalf("Right expression operator type does not match")
 	}
 
-	intLiteral, ok := right.Right.(ast.IntegerLiteral)
-
+	rl, ok := right.Left.(ast.IntegerLiteral)
 	if !ok {
-		t.Fatalf("Right expression does not IntegerLiteral")
+		t.Fatalf("Right left expression does not IntegerLiteral")
 	}
 
-	if intLiteral.Value != 3 {
-		t.Fatalf("Right expression does not match")
+	if rl.Value != 2 {
+		t.Fatalf("Right left expression value does not match")
+	}
+
+	rr, ok := right.Right.(ast.IntegerLiteral)
+	if !ok {
+		t.Fatalf("Right right expression does not IntegerLiteral")
+	}
+
+	if rr.Value != 1 {
+		t.Fatalf("Right right expression value does not match")
 	}
 }

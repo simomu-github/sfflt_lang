@@ -74,7 +74,7 @@ func TestCompileFactor(t *testing.T) {
 }
 
 func TestCompileTerm(t *testing.T) {
-	input := "2 - -3"
+	input := "(4 - 3) * (2 + 1)"
 	lexer := lexer.New(input)
 	parser := parser.New(lexer)
 	exprs := parser.ParseProgram()
@@ -82,11 +82,13 @@ func TestCompileTerm(t *testing.T) {
 
 	instructions := compiler.Compile()
 	expects := []string{
-		"FFFLFT",
-		"FFLLT",
+		"FFFLFFT",
 		"FFFLLT",
-		"LFFT",
 		"LFFL",
+		"FFFLFT",
+		"FFFLT",
+		"LFFF",
+		"LFFT",
 	}
 
 	for i, expect := range expects {

@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/simomu-github/sfflt_lang/ast"
@@ -25,7 +26,7 @@ func New(lexer *lexer.Lexer) *Parser {
 func (p *Parser) ParseProgram() []ast.Expression {
 	expressions := []ast.Expression{}
 	for p.currentToken.Type != token.EOF {
-		expr := p.parseTerm()
+		expr := p.parseExpression()
 		if expr != nil {
 			expressions = append(expressions, expr)
 		}
@@ -33,6 +34,10 @@ func (p *Parser) ParseProgram() []ast.Expression {
 	}
 
 	return expressions
+}
+
+func (p *Parser) parseExpression() ast.Expression {
+	return p.parseTerm()
 }
 
 func (p *Parser) parseTerm() ast.Expression {
@@ -84,9 +89,18 @@ func (p *Parser) parsePrimary() ast.Expression {
 		return ast.CharLiteral{Token: p.currentToken, Value: p.currentToken.Literal}
 	case token.TRUE, token.FALSE:
 		return ast.BooleanLiteral{Token: p.currentToken, Value: p.currentToken.Type == token.TRUE}
+	case token.LPAREN:
+		p.nextToken()
+		expr := p.parseExpression()
+		if p.currentToken.Type != token.RPAREN {
+			// TODO: parser error
+			panic(fmt.Sprintf("Parser Error at %s", p.currentToken.Type))
+		}
+		return expr
 	}
 
-	return nil
+	// TODO: parser error
+	panic("Parser Error")
 }
 
 func (p *Parser) parseIntegerLiteral() ast.Expression {
