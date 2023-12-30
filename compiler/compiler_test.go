@@ -129,8 +129,8 @@ func TestCompilePut(t *testing.T) {
 	}
 }
 
-func TestCompileVar(t *testing.T) {
-	input := "var a = 1;"
+func TestCompileGlobalVariable(t *testing.T) {
+	input := "var a = 1; a;"
 	lexer := lexer.New(input)
 	parser := parser.New(lexer)
 	exprs := parser.ParseProgram()
@@ -138,9 +138,12 @@ func TestCompileVar(t *testing.T) {
 
 	instructions := compiler.Compile()
 	expects := []string{
-		"FFFLT",
 		"FFFLLFFLLLLLFFFFLT",
+		"FFFLT",
 		"LLF",
+		"FFFLLFFLLLLLFFFFLT",
+		"LLL",
+		"FTT",
 	}
 
 	for i, expect := range expects {

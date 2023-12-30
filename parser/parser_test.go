@@ -9,7 +9,7 @@ import (
 )
 
 func TestParsePrimary(t *testing.T) {
-	input := "123; 'a'; true; false;"
+	input := "123; 'a'; true; false; a;"
 	lexer := lexer.New(input)
 	parser := New(lexer)
 	stmts := parser.ParseProgram()
@@ -72,6 +72,17 @@ func TestParsePrimary(t *testing.T) {
 
 	if boolLiteral.Value != false {
 		t.Fatalf("Value does not match")
+	}
+
+	stmt = stmts[4].(ast.ExpressionStatement)
+	variable, ok := stmt.Expression.(ast.Variable)
+
+	if !ok {
+		t.Fatalf("Not Variable")
+	}
+
+	if variable.Identifier.Literal != "a" {
+		t.Fatalf("variable literal is not match")
 	}
 }
 

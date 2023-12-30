@@ -143,6 +143,8 @@ func (p *Parser) parsePrimary() ast.Expression {
 		return p.parseIntegerLiteral()
 	case token.CHAR:
 		return ast.CharLiteral{Token: p.currentToken, Value: p.currentToken.Literal}
+	case token.IDENT:
+		return ast.Variable{Identifier: p.currentToken}
 	case token.TRUE, token.FALSE:
 		return ast.BooleanLiteral{Token: p.currentToken, Value: p.currentToken.Type == token.TRUE}
 	case token.LPAREN:

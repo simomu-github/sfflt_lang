@@ -48,6 +48,7 @@ type ExpressionVisitor interface {
 	VisitIntegerLiteral(e IntegerLiteral)
 	VisitCharLiteral(e CharLiteral)
 	VisitBooleanLiteral(e BooleanLiteral)
+	VisitVariable(e Variable)
 }
 
 type Binary struct {
@@ -94,4 +95,12 @@ type BooleanLiteral struct {
 
 func (l BooleanLiteral) Visit(visitor ExpressionVisitor) {
 	visitor.VisitBooleanLiteral(l)
+}
+
+type Variable struct {
+	Identifier token.Token
+}
+
+func (v Variable) Visit(visitor ExpressionVisitor) {
+	visitor.VisitVariable(v)
 }

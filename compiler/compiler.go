@@ -28,9 +28,9 @@ func (c *Compiler) Compile() []string {
 }
 
 func (c *Compiler) VisitVar(s ast.Var) {
-	s.Expression.Visit(c)
 	ident := identToGlobalVariable("g" + s.Identifier.Literal)
 	c.instructions = append(c.instructions, "FFF"+ident+"T")
+	s.Expression.Visit(c)
 	c.instructions = append(c.instructions, "LLF")
 }
 
@@ -106,6 +106,12 @@ func (c *Compiler) VisitBooleanLiteral(e ast.BooleanLiteral) {
 
 	instruction := "FF" + value
 	c.instructions = append(c.instructions, instruction)
+}
+
+func (c *Compiler) VisitVariable(e ast.Variable) {
+	ident := identToGlobalVariable("g" + e.Identifier.Literal)
+	c.instructions = append(c.instructions, "FFF"+ident+"T")
+	c.instructions = append(c.instructions, "LLL")
 }
 
 func identToGlobalVariable(ident string) string {
