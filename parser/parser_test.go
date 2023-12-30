@@ -104,17 +104,17 @@ func TestParseFactor(t *testing.T) {
 	parser := New(lexer)
 	exps := parser.ParseProgram()
 
-	factor, ok := exps[0].(ast.Factor)
+	binary, ok := exps[0].(ast.Binary)
 
 	if !ok {
-		t.Fatalf("Not Factor")
+		t.Fatalf("Not Binary")
 	}
 
-	if factor.Operator.Type != token.ASTERISK {
+	if binary.Operator.Type != token.ASTERISK {
 		t.Fatalf("Operator not ASTERISK")
 	}
 
-	left, ok := factor.Left.(ast.IntegerLiteral)
+	left, ok := binary.Left.(ast.IntegerLiteral)
 
 	if !ok {
 		t.Fatalf("Left expression does not IntegerLiteral")
@@ -124,10 +124,57 @@ func TestParseFactor(t *testing.T) {
 		t.Fatalf("Left expression does not match")
 	}
 
-	right, ok := factor.Right.(ast.Unary)
+	right, ok := binary.Right.(ast.Unary)
 
 	if !ok {
 		t.Fatalf("Right expression does not Unary")
+	}
+
+	if right.Operator.Type != token.MINUS {
+		t.Fatalf("TokenType not MINUS")
+	}
+
+	intLiteral, ok := right.Right.(ast.IntegerLiteral)
+
+	if !ok {
+		t.Fatalf("Right expression does not IntegerLiteral")
+	}
+
+	if intLiteral.Value != 3 {
+		t.Fatalf("Right expression does not match")
+	}
+}
+
+func TestParseTerm(t *testing.T) {
+	input := "2 + -3"
+	lexer := lexer.New(input)
+	parser := New(lexer)
+	exps := parser.ParseProgram()
+
+	binary, ok := exps[0].(ast.Binary)
+
+	if !ok {
+		t.Fatalf("Not Binary")
+	}
+
+	if binary.Operator.Type != token.PLUS {
+		t.Fatalf("Operator not PLUS")
+	}
+
+	left, ok := binary.Left.(ast.IntegerLiteral)
+
+	if !ok {
+		t.Fatalf("Left expression does not IntegerLiteral")
+	}
+
+	if left.Value != 2 {
+		t.Fatalf("Left expression does not match")
+	}
+
+	right, ok := binary.Right.(ast.Unary)
+
+	if !ok {
+		t.Fatalf("Right expression does not Unary %q", binary.Right)
 	}
 
 	if right.Operator.Type != token.MINUS {

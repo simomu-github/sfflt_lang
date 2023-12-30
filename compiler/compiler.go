@@ -27,15 +27,21 @@ func (c *Compiler) Compile() []string {
 	return c.instructions
 }
 
-func (c *Compiler) VisitFactorExpression(e ast.Factor) {
+func (c *Compiler) VisitBinaryExpression(e ast.Binary) {
 	e.Left.Visit(c)
 	e.Right.Visit(c)
 	var instruction string
-	if e.Operator.Type == token.ASTERISK {
+	switch e.Operator.Type {
+	case token.PLUS:
+		instruction = "LFFF"
+	case token.MINUS:
+		instruction = "LFFL"
+	case token.ASTERISK:
 		instruction = "LFFT"
-	} else {
+	case token.SLASH:
 		instruction = "LFLF"
 	}
+
 	c.instructions = append(c.instructions, instruction)
 }
 
