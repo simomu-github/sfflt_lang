@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/simomu-github/sfflt_lang/ast"
+	"github.com/simomu-github/sfflt_lang/token"
 )
 
 type Compiler struct {
@@ -24,6 +25,15 @@ func (c *Compiler) Compile() []string {
 	}
 
 	return c.instructions
+}
+
+func (c *Compiler) VisitUnaryExpression(e ast.Unary) {
+	switch e.Operator.Type {
+	case token.MINUS:
+		c.instructions = append(c.instructions, "FFLLT")
+		e.Right.Visit(c)
+		c.instructions = append(c.instructions, "LFFT")
+	}
 }
 
 func (c *Compiler) VisitIntegerLiteral(e ast.IntegerLiteral) {

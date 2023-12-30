@@ -70,3 +70,30 @@ func TestParsePrimary(t *testing.T) {
 		t.Fatalf("Value does not match")
 	}
 }
+
+func TestParseUnary(t *testing.T) {
+	input := "-123"
+	lexer := lexer.New(input)
+	parser := New(lexer)
+	exps := parser.ParseProgram()
+
+	unary, ok := exps[0].(ast.Unary)
+
+	if !ok {
+		t.Fatalf("Not Unary")
+	}
+
+	if unary.Operator.Type != token.MINUS {
+		t.Fatalf("TokenType not INT")
+	}
+
+	intLiteral, ok := unary.Right.(ast.IntegerLiteral)
+
+	if !ok {
+		t.Fatalf("Right expression does not IntegerLiteral")
+	}
+
+	if intLiteral.Value != 123 {
+		t.Fatalf("Right expression does not match")
+	}
+}

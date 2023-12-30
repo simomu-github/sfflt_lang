@@ -25,7 +25,7 @@ func New(lexer *lexer.Lexer) *Parser {
 func (p *Parser) ParseProgram() []ast.Expression {
 	expressions := []ast.Expression{}
 	for p.currentToken.Type != token.EOF {
-		expr := p.parsePrimary()
+		expr := p.parseUnary()
 		if expr != nil {
 			expressions = append(expressions, expr)
 		}
@@ -33,6 +33,17 @@ func (p *Parser) ParseProgram() []ast.Expression {
 	}
 
 	return expressions
+}
+
+func (p *Parser) parseUnary() ast.Expression {
+	switch p.currentToken.Type {
+	case token.MINUS:
+		operator := p.currentToken
+		p.nextToken()
+		return ast.Unary{Operator: operator, Right: p.parsePrimary()}
+	}
+
+	return p.parsePrimary()
 }
 
 func (p *Parser) parsePrimary() ast.Expression {
