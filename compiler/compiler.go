@@ -27,13 +27,27 @@ func (c *Compiler) Compile() []string {
 	return c.instructions
 }
 
+func (c *Compiler) VisitFactorExpression(e ast.Factor) {
+	e.Left.Visit(c)
+	e.Right.Visit(c)
+	var instruction string
+	if e.Operator.Type == token.ASTERISK {
+		instruction = "LFFT"
+	} else {
+		instruction = "LFLF"
+	}
+	c.instructions = append(c.instructions, instruction)
+}
+
 func (c *Compiler) VisitUnaryExpression(e ast.Unary) {
-	switch e.Operator.Type {
-	case token.MINUS:
+	if e.Operator.Type == token.MINUS {
 		c.instructions = append(c.instructions, "FFLLT")
 		e.Right.Visit(c)
 		c.instructions = append(c.instructions, "LFFT")
+		return
 	}
+
+	e.Right.Visit(c)
 }
 
 func (c *Compiler) VisitIntegerLiteral(e ast.IntegerLiteral) {

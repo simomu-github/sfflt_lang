@@ -3,6 +3,7 @@ package ast
 import "github.com/simomu-github/sfflt_lang/token"
 
 type ExpressionVisitor interface {
+	VisitFactorExpression(f Factor)
 	VisitUnaryExpression(e Unary)
 	VisitIntegerLiteral(e IntegerLiteral)
 	VisitCharLiteral(e CharLiteral)
@@ -15,6 +16,16 @@ type Statement interface {
 
 type Expression interface {
 	Visit(visitor ExpressionVisitor)
+}
+
+type Factor struct {
+	Left     Expression
+	Operator token.Token
+	Right    Expression
+}
+
+func (f Factor) Visit(visitor ExpressionVisitor) {
+	visitor.VisitFactorExpression(f)
 }
 
 type Unary struct {

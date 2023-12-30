@@ -97,3 +97,50 @@ func TestParseUnary(t *testing.T) {
 		t.Fatalf("Right expression does not match")
 	}
 }
+
+func TestParseFactor(t *testing.T) {
+	input := "2 * -3"
+	lexer := lexer.New(input)
+	parser := New(lexer)
+	exps := parser.ParseProgram()
+
+	factor, ok := exps[0].(ast.Factor)
+
+	if !ok {
+		t.Fatalf("Not Factor")
+	}
+
+	if factor.Operator.Type != token.ASTERISK {
+		t.Fatalf("Operator not ASTERISK")
+	}
+
+	left, ok := factor.Left.(ast.IntegerLiteral)
+
+	if !ok {
+		t.Fatalf("Left expression does not IntegerLiteral")
+	}
+
+	if left.Value != 2 {
+		t.Fatalf("Left expression does not match")
+	}
+
+	right, ok := factor.Right.(ast.Unary)
+
+	if !ok {
+		t.Fatalf("Right expression does not Unary")
+	}
+
+	if right.Operator.Type != token.MINUS {
+		t.Fatalf("TokenType not MINUS")
+	}
+
+	intLiteral, ok := right.Right.(ast.IntegerLiteral)
+
+	if !ok {
+		t.Fatalf("Right expression does not IntegerLiteral")
+	}
+
+	if intLiteral.Value != 3 {
+		t.Fatalf("Right expression does not match")
+	}
+}
