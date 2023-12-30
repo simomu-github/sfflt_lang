@@ -8,7 +8,7 @@ import (
 )
 
 func TestCompilePrimary(t *testing.T) {
-	input := "10 'a' true false"
+	input := "10; 'a'; true; false;"
 	lexer := lexer.New(input)
 	parser := parser.New(lexer)
 	exprs := parser.ParseProgram()
@@ -17,9 +17,13 @@ func TestCompilePrimary(t *testing.T) {
 	instructions := compiler.Compile()
 	expects := []string{
 		"FFFLFLFT",
+		"FTT",
 		"FFFLLFFFFLT",
+		"FTT",
 		"FFFLT",
+		"FTT",
 		"FFFFT",
+		"FTT",
 	}
 
 	for i, expect := range expects {
@@ -30,7 +34,7 @@ func TestCompilePrimary(t *testing.T) {
 }
 
 func TestCompileUnary(t *testing.T) {
-	input := "-10"
+	input := "-10;"
 	lexer := lexer.New(input)
 	parser := parser.New(lexer)
 	exprs := parser.ParseProgram()
@@ -41,6 +45,7 @@ func TestCompileUnary(t *testing.T) {
 		"FFLLT",
 		"FFFLFLFT",
 		"LFFT",
+		"FTT",
 	}
 
 	for i, expect := range expects {
@@ -51,7 +56,7 @@ func TestCompileUnary(t *testing.T) {
 }
 
 func TestCompileFactor(t *testing.T) {
-	input := "2 * -3"
+	input := "2 * -3;"
 	lexer := lexer.New(input)
 	parser := parser.New(lexer)
 	exprs := parser.ParseProgram()
@@ -64,6 +69,7 @@ func TestCompileFactor(t *testing.T) {
 		"FFFLLT",
 		"LFFT",
 		"LFFT",
+		"FTT",
 	}
 
 	for i, expect := range expects {
@@ -74,7 +80,7 @@ func TestCompileFactor(t *testing.T) {
 }
 
 func TestCompileTerm(t *testing.T) {
-	input := "(4 - 3) * (2 + 1)"
+	input := "(4 - 3) * (2 + 1);"
 	lexer := lexer.New(input)
 	parser := parser.New(lexer)
 	exprs := parser.ParseProgram()
@@ -89,6 +95,29 @@ func TestCompileTerm(t *testing.T) {
 		"FFFLT",
 		"LFFF",
 		"LFFT",
+		"FTT",
+	}
+
+	for i, expect := range expects {
+		if instructions[i] != expect {
+			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, instructions[i])
+		}
+	}
+}
+
+func TestCompilePut(t *testing.T) {
+	input := "putn -1;"
+	lexer := lexer.New(input)
+	parser := parser.New(lexer)
+	exprs := parser.ParseProgram()
+	compiler := New(exprs)
+
+	instructions := compiler.Compile()
+	expects := []string{
+		"FFLLT",
+		"FFFLT",
+		"LFFT",
+		"LTFL",
 	}
 
 	for i, expect := range expects {

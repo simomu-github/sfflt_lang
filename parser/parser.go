@@ -23,17 +23,43 @@ func New(lexer *lexer.Lexer) *Parser {
 
 }
 
-func (p *Parser) ParseProgram() []ast.Expression {
-	expressions := []ast.Expression{}
+func (p *Parser) ParseProgram() []ast.Statement {
+	statements := []ast.Statement{}
 	for p.currentToken.Type != token.EOF {
-		expr := p.parseExpression()
-		if expr != nil {
-			expressions = append(expressions, expr)
+		stmt := p.parseStatement()
+		if stmt != nil {
+			statements = append(statements, stmt)
 		}
 		p.nextToken()
 	}
 
-	return expressions
+	return statements
+}
+
+func (p *Parser) parseStatement() ast.Statement {
+	if p.currentToken.Type == token.PUTN {
+		return p.parsePutnStatement()
+	}
+
+	expr := p.parseExpression()
+	if p.peekToken.Type != token.SEMICOLON {
+		panic("Parser error")
+	}
+	p.nextToken()
+
+	return ast.ExpressionStatement{Expression: expr}
+}
+
+func (p *Parser) parsePutnStatement() ast.Statement {
+	tok := p.currentToken
+	p.nextToken()
+	expr := p.parseExpression()
+	if p.peekToken.Type != token.SEMICOLON {
+		panic("Parser error")
+	}
+	p.nextToken()
+
+	return ast.PutnStatement{Token: tok, Expression: expr}
 }
 
 func (p *Parser) parseExpression() ast.Expression {
@@ -48,7 +74,6 @@ func (p *Parser) parseTerm() ast.Expression {
 		operator := p.currentToken
 		p.nextToken()
 		right := p.parseFactor()
-		p.nextToken()
 		return ast.Binary{Left: expr, Operator: operator, Right: right}
 	}
 
@@ -63,7 +88,6 @@ func (p *Parser) parseFactor() ast.Expression {
 		operator := p.currentToken
 		p.nextToken()
 		right := p.parseUnary()
-		p.nextToken()
 		return ast.Binary{Left: expr, Operator: operator, Right: right}
 	}
 
@@ -92,6 +116,7 @@ func (p *Parser) parsePrimary() ast.Expression {
 	case token.LPAREN:
 		p.nextToken()
 		expr := p.parseExpression()
+		p.nextToken()
 		if p.currentToken.Type != token.RPAREN {
 			// TODO: parser error
 			panic(fmt.Sprintf("Parser Error at %s", p.currentToken.Type))

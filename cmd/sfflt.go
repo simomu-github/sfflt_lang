@@ -29,8 +29,8 @@ func Compile(path string) error {
 
 	lexer := lexer.New(string(bytes))
 	parser := parser.New(lexer)
-	expressions := parser.ParseProgram()
-	compiler := compiler.New(expressions)
+	statements := parser.ParseProgram()
+	compiler := compiler.New(statements)
 	instructions := compiler.Compile()
 	outputFilename := getFilenameWithoutExt(path) + ".fflt"
 	os.WriteFile(outputFilename, []byte(strings.Join(instructions, "\n")), 0644)

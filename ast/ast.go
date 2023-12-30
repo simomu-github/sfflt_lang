@@ -2,20 +2,42 @@ package ast
 
 import "github.com/simomu-github/sfflt_lang/token"
 
+type Statement interface {
+	Visit(visitor StatementVisitor)
+}
+
+type StatementVisitor interface {
+	VisitPutn(s PutnStatement)
+	VisitExpression(s ExpressionStatement)
+}
+
+type PutnStatement struct {
+	Token      token.Token
+	Expression Expression
+}
+
+func (pn PutnStatement) Visit(visitor StatementVisitor) {
+	visitor.VisitPutn(pn)
+}
+
+type ExpressionStatement struct {
+	Expression Expression
+}
+
+func (e ExpressionStatement) Visit(visitor StatementVisitor) {
+	visitor.VisitExpression(e)
+}
+
+type Expression interface {
+	Visit(visitor ExpressionVisitor)
+}
+
 type ExpressionVisitor interface {
 	VisitBinaryExpression(b Binary)
 	VisitUnaryExpression(e Unary)
 	VisitIntegerLiteral(e IntegerLiteral)
 	VisitCharLiteral(e CharLiteral)
 	VisitBooleanLiteral(e BooleanLiteral)
-}
-
-type Statement interface {
-	statement()
-}
-
-type Expression interface {
-	Visit(visitor ExpressionVisitor)
 }
 
 type Binary struct {

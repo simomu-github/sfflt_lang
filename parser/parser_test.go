@@ -9,12 +9,13 @@ import (
 )
 
 func TestParsePrimary(t *testing.T) {
-	input := "123 'a' true false"
+	input := "123; 'a'; true; false;"
 	lexer := lexer.New(input)
 	parser := New(lexer)
-	exps := parser.ParseProgram()
+	stmts := parser.ParseProgram()
 
-	intLiteral, ok := exps[0].(ast.IntegerLiteral)
+	stmt := stmts[0].(ast.ExpressionStatement)
+	intLiteral, ok := stmt.Expression.(ast.IntegerLiteral)
 
 	if !ok {
 		t.Fatalf("Not IntegerLiteral")
@@ -28,7 +29,8 @@ func TestParsePrimary(t *testing.T) {
 		t.Fatalf("Value does not match")
 	}
 
-	charLiteral, ok := exps[1].(ast.CharLiteral)
+	stmt = stmts[1].(ast.ExpressionStatement)
+	charLiteral, ok := stmt.Expression.(ast.CharLiteral)
 
 	if !ok {
 		t.Fatalf("Not CharLiteral")
@@ -42,7 +44,8 @@ func TestParsePrimary(t *testing.T) {
 		t.Fatalf("Value does not match")
 	}
 
-	boolLiteral, ok := exps[2].(ast.BooleanLiteral)
+	stmt = stmts[2].(ast.ExpressionStatement)
+	boolLiteral, ok := stmt.Expression.(ast.BooleanLiteral)
 
 	if !ok {
 		t.Fatalf("Not BooleanLiteral")
@@ -56,7 +59,8 @@ func TestParsePrimary(t *testing.T) {
 		t.Fatalf("Value does not match")
 	}
 
-	boolLiteral, ok = exps[3].(ast.BooleanLiteral)
+	stmt = stmts[3].(ast.ExpressionStatement)
+	boolLiteral, ok = stmt.Expression.(ast.BooleanLiteral)
 
 	if !ok {
 		t.Fatalf("Not BooleanLiteral")
@@ -75,9 +79,9 @@ func TestParseUnary(t *testing.T) {
 	input := "-123"
 	lexer := lexer.New(input)
 	parser := New(lexer)
-	exps := parser.ParseProgram()
+	exp := parser.parseExpression()
 
-	unary, ok := exps[0].(ast.Unary)
+	unary, ok := exp.(ast.Unary)
 
 	if !ok {
 		t.Fatalf("Not Unary")
@@ -102,9 +106,9 @@ func TestParseFactor(t *testing.T) {
 	input := "2 * -3"
 	lexer := lexer.New(input)
 	parser := New(lexer)
-	exps := parser.ParseProgram()
+	expr := parser.parseExpression()
 
-	binary, ok := exps[0].(ast.Binary)
+	binary, ok := expr.(ast.Binary)
 
 	if !ok {
 		t.Fatalf("Not Binary")
@@ -149,9 +153,9 @@ func TestParseTerm(t *testing.T) {
 	input := "(4 - 3) * (2 + 1)"
 	lexer := lexer.New(input)
 	parser := New(lexer)
-	exps := parser.ParseProgram()
+	expr := parser.parseExpression()
 
-	binary, ok := exps[0].(ast.Binary)
+	binary, ok := expr.(ast.Binary)
 
 	if !ok {
 		t.Fatalf("Not Binary")
@@ -215,5 +219,31 @@ func TestParseTerm(t *testing.T) {
 
 	if rr.Value != 1 {
 		t.Fatalf("Right right expression value does not match")
+	}
+}
+
+func TestParsePutn(t *testing.T) {
+	input := "putn 1;"
+	lexer := lexer.New(input)
+	parser := New(lexer)
+	stmt := parser.ParseProgram()
+
+	putn, ok := stmt[0].(ast.PutnStatement)
+	if !ok {
+		t.Fatalf("Statement is not Putn")
+	}
+
+	if putn.Token.Type != token.PUTN {
+		t.Fatalf("Token is not PUTN")
+	}
+
+	intLiteral, ok := putn.Expression.(ast.IntegerLiteral)
+
+	if !ok {
+		t.Fatalf("Expression is not IntegerLiteral")
+	}
+
+	if intLiteral.Value != 1 {
+		t.Fatalf("IntegerLiteral value is not match")
 	}
 }

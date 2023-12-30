@@ -8,23 +8,34 @@ import (
 )
 
 type Compiler struct {
-	expressions  []ast.Expression
+	statements   []ast.Statement
 	instructions []string
 }
 
-func New(expressions []ast.Expression) *Compiler {
+func New(statements []ast.Statement) *Compiler {
 	return &Compiler{
-		expressions:  expressions,
+		statements:   statements,
 		instructions: []string{},
 	}
 }
 
 func (c *Compiler) Compile() []string {
-	for _, e := range c.expressions {
+	for _, e := range c.statements {
 		e.Visit(c)
 	}
 
 	return c.instructions
+}
+
+func (c *Compiler) VisitPutn(s ast.PutnStatement) {
+	s.Expression.Visit(c)
+
+	c.instructions = append(c.instructions, "LTFL")
+}
+
+func (c *Compiler) VisitExpression(s ast.ExpressionStatement) {
+	s.Expression.Visit(c)
+	c.instructions = append(c.instructions, "FTT")
 }
 
 func (c *Compiler) VisitBinaryExpression(e ast.Binary) {
