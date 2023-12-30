@@ -7,8 +7,18 @@ type Statement interface {
 }
 
 type StatementVisitor interface {
+	VisitVar(s Var)
 	VisitPut(s PutStatement)
 	VisitExpression(s ExpressionStatement)
+}
+
+type Var struct {
+	Identifier token.Token
+	Expression Expression
+}
+
+func (v Var) Visit(visitor StatementVisitor) {
+	visitor.VisitVar(v)
 }
 
 type PutStatement struct {

@@ -247,3 +247,29 @@ func TestParsePut(t *testing.T) {
 		t.Fatalf("IntegerLiteral value is not match")
 	}
 }
+
+func TestParseVar(t *testing.T) {
+	input := "var a = 1;"
+	lexer := lexer.New(input)
+	parser := New(lexer)
+	stmt := parser.ParseProgram()
+
+	varStmt, ok := stmt[0].(ast.Var)
+	if !ok {
+		t.Fatalf("Statement is not var")
+	}
+
+	if varStmt.Identifier.Type != token.IDENT {
+		t.Fatalf("Var statement does not have Identifier")
+	}
+
+	intLiteral, ok := varStmt.Expression.(ast.IntegerLiteral)
+
+	if !ok {
+		t.Fatalf("Expression is not IntegerLiteral")
+	}
+
+	if intLiteral.Value != 1 {
+		t.Fatalf("IntegerLiteral value is not match")
+	}
+}

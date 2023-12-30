@@ -128,3 +128,24 @@ func TestCompilePut(t *testing.T) {
 		}
 	}
 }
+
+func TestCompileVar(t *testing.T) {
+	input := "var a = 1;"
+	lexer := lexer.New(input)
+	parser := parser.New(lexer)
+	exprs := parser.ParseProgram()
+	compiler := New(exprs)
+
+	instructions := compiler.Compile()
+	expects := []string{
+		"FFFLT",
+		"FFFLLFFLLLLLFFFFLT",
+		"LLF",
+	}
+
+	for i, expect := range expects {
+		if instructions[i] != expect {
+			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, instructions[i])
+		}
+	}
+}

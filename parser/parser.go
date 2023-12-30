@@ -26,7 +26,7 @@ func New(lexer *lexer.Lexer) *Parser {
 func (p *Parser) ParseProgram() []ast.Statement {
 	statements := []ast.Statement{}
 	for p.currentToken.Type != token.EOF {
-		stmt := p.parseStatement()
+		stmt := p.parseDeclaration()
 		if stmt != nil {
 			statements = append(statements, stmt)
 		}
@@ -34,6 +34,37 @@ func (p *Parser) ParseProgram() []ast.Statement {
 	}
 
 	return statements
+}
+
+func (p *Parser) parseDeclaration() ast.Statement {
+	if p.currentToken.Type == token.VAR {
+		return p.parseVarDeclaration()
+	}
+
+	return p.parseStatement()
+}
+
+func (p *Parser) parseVarDeclaration() ast.Statement {
+	p.nextToken()
+	if p.currentToken.Type != token.IDENT {
+		panic("Parser error")
+	}
+	identifier := p.currentToken
+	p.nextToken()
+
+	if p.currentToken.Type != token.ASSIGN {
+		panic("Parser error")
+	}
+	p.nextToken()
+
+	expr := p.parseExpression()
+
+	if p.peekToken.Type != token.SEMICOLON {
+		panic("Parser error")
+	}
+	p.nextToken()
+
+	return ast.Var{Identifier: identifier, Expression: expr}
 }
 
 func (p *Parser) parseStatement() ast.Statement {

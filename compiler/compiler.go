@@ -27,6 +27,13 @@ func (c *Compiler) Compile() []string {
 	return c.instructions
 }
 
+func (c *Compiler) VisitVar(s ast.Var) {
+	s.Expression.Visit(c)
+	ident := identToGlobalVariable("g" + s.Identifier.Literal)
+	c.instructions = append(c.instructions, "FFF"+ident+"T")
+	c.instructions = append(c.instructions, "LLF")
+}
+
 func (c *Compiler) VisitPut(s ast.PutStatement) {
 	s.Expression.Visit(c)
 
@@ -73,13 +80,19 @@ func (c *Compiler) VisitUnaryExpression(e ast.Unary) {
 
 func (c *Compiler) VisitIntegerLiteral(e ast.IntegerLiteral) {
 	value := intToBinary(e.Value)
-	instruction := "FF" + value
+	var sign string
+	if e.Value >= 0 {
+		sign = "F"
+	} else {
+		sign = "L"
+	}
+	instruction := "FF" + sign + value + "T"
 	c.instructions = append(c.instructions, instruction)
 }
 
 func (c *Compiler) VisitCharLiteral(e ast.CharLiteral) {
 	value := intToBinary(int64([]rune(e.Value)[0]))
-	instruction := "FF" + value
+	instruction := "FFF" + value + "T"
 	c.instructions = append(c.instructions, instruction)
 }
 
@@ -93,6 +106,35 @@ func (c *Compiler) VisitBooleanLiteral(e ast.BooleanLiteral) {
 
 	instruction := "FF" + value
 	c.instructions = append(c.instructions, instruction)
+}
+
+func identToGlobalVariable(ident string) string {
+	result := ""
+	for _, char := range ident {
+		result += intToBinary(int64(char))
+	}
+
+	return result
+}
+
+func intToBin(value int64) string {
+	binary := []string{}
+
+	decimal := value
+	for decimal != 0 {
+		bin := decimal % 2
+		if bin == 0 {
+			binary = append(binary, "F")
+		} else {
+			binary = append(binary, "L")
+		}
+		decimal /= 2
+	}
+
+	for i := 0; i < len(binary)/2; i++ {
+		binary[i], binary[len(binary)-i-1] = binary[len(binary)-i-1], binary[i]
+	}
+	return strings.Join(binary, "")
 }
 
 func intToBinary(value int64) string {
@@ -109,14 +151,8 @@ func intToBinary(value int64) string {
 		decimal /= 2
 	}
 
-	if value >= 0 {
-		binary = append(binary, "F")
-	} else {
-		binary = append(binary, "L")
-	}
-
 	for i := 0; i < len(binary)/2; i++ {
 		binary[i], binary[len(binary)-i-1] = binary[len(binary)-i-1], binary[i]
 	}
-	return strings.Join(binary, "") + "T"
+	return strings.Join(binary, "")
 }
