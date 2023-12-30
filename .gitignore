@@ -22,3 +22,7 @@ go.work
 
 # Build directory
 release/
+
+.envrc
+test.fflt
+test.sflt
