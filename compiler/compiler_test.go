@@ -243,6 +243,33 @@ func TestCompilePut(t *testing.T) {
 	}
 }
 
+func TestCompileIf(t *testing.T) {
+	input := "if (true) { 1; } else { 2;}"
+	lexer := lexer.New(input)
+	parser := parser.New(lexer)
+	exprs := parser.ParseProgram()
+	compiler := New(exprs)
+
+	instructions := compiler.Compile()
+	expects := []string{
+		"FFFLT",                  // condition
+		"TLFLLFFFLLLLFLLFFLFLT",  // jump label when zero
+		"FFFLT",                  // then statement
+		"FTT",                    // then statement
+		"TFTLLFFFLLLLFLLFFLFFFT", // jump label to end
+		"TFFLLFFFLLLLFLLFFLFLT",  // mark label zero
+		"FFFLFT",                 // else statement
+		"FTT",                    // else statement
+		"TFFLLFFFLLLLFLLFFLFFFT", //mark label end
+	}
+
+	for i, expect := range expects {
+		if instructions[i] != expect {
+			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, instructions[i])
+		}
+	}
+}
+
 func TestCompileGlobalVariable(t *testing.T) {
 	input := "var a = 1; a;"
 	lexer := lexer.New(input)

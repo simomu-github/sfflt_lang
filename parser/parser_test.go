@@ -376,3 +376,60 @@ func TestParseVar(t *testing.T) {
 		t.Fatalf("IntegerLiteral value is not match")
 	}
 }
+
+func TestParseBlock(t *testing.T) {
+	input := "{ a; b; }"
+	lexer := lexer.New(input)
+	parser := New(lexer)
+	parser.ParseProgram()
+}
+
+func TestParseIf(t *testing.T) {
+	input := `
+if (true)
+    true;
+else
+    false;
+`
+	lexer := lexer.New(input)
+	parser := New(lexer)
+	stmt := parser.ParseProgram()
+
+	ifStmt, ok := stmt[0].(ast.If)
+	if !ok {
+		t.Fatalf("Statement is not if")
+	}
+
+	condition, ok := ifStmt.Condition.(ast.BooleanLiteral)
+	if !ok {
+		t.Fatalf("condition is not BooleanLiteral")
+	}
+
+	if condition.Value != true {
+		t.Fatalf("condition value is not match")
+	}
+
+	thenStmt, ok := ifStmt.Then.(ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("Then statement is not ExpressionStatement")
+	}
+	thenExpr, ok := thenStmt.Expression.(ast.BooleanLiteral)
+	if !ok {
+		t.Fatalf("Then expression statement is not BooleanLiteral")
+	}
+	if thenExpr.Value != true {
+		t.Fatalf("Then value is not match")
+	}
+
+	elseStmt, ok := ifStmt.Else.(ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("Else statement is not ExpressionStatement")
+	}
+	elseExpr, ok := elseStmt.Expression.(ast.BooleanLiteral)
+	if !ok {
+		t.Fatalf("Else expression statement is not BooleanLiteral")
+	}
+	if elseExpr.Value != false {
+		t.Fatalf("Else value is not match")
+	}
+}

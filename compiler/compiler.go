@@ -44,6 +44,30 @@ func (c *Compiler) VisitPut(s ast.PutStatement) {
 	}
 }
 
+func (c *Compiler) VisitIf(s ast.If) {
+	s.Condition.Visit(c)
+
+	trueJumpOffset := c.reserveJumpLabel("TLF")
+
+	s.Then.Visit(c)
+	endJumpOffset := c.reserveJumpLabel("TFT")
+
+	trueLabel := c.markJumpLabel()
+	c.confirmJumpLabel(trueJumpOffset, trueLabel)
+	if s.Else != nil {
+		s.Else.Visit(c)
+	}
+
+	endLabel := c.markJumpLabel()
+	c.confirmJumpLabel(endJumpOffset, endLabel)
+}
+
+func (c *Compiler) VisitBlock(s ast.Block) {
+	for _, stmt := range s.Statements {
+		stmt.Visit(c)
+	}
+}
+
 func (c *Compiler) VisitExpression(s ast.ExpressionStatement) {
 	s.Expression.Visit(c)
 	c.instructions = append(c.instructions, "FTT")

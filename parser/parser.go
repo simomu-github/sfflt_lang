@@ -73,6 +73,14 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parsePutStatement()
 	}
 
+	if p.currentToken.Type == token.IF {
+		return p.parseIfStatement()
+	}
+
+	if p.currentToken.Type == token.LBRACE {
+		return p.parseBlock()
+	}
+
 	expr := p.parseExpression()
 	if p.peekToken.Type != token.SEMICOLON {
 		panic("Parser error")
@@ -92,6 +100,46 @@ func (p *Parser) parsePutStatement() ast.Statement {
 	p.nextToken()
 
 	return ast.PutStatement{Token: tok, Expression: expr}
+}
+
+func (p *Parser) parseIfStatement() ast.Statement {
+	p.nextToken()
+	if p.currentToken.Type != token.LPAREN {
+		panic("Parser error")
+	}
+	p.nextToken()
+
+	condition := p.parseExpression()
+	p.nextToken()
+
+	if p.currentToken.Type != token.RPAREN {
+		panic("Parser error")
+	}
+	p.nextToken()
+
+	thenStmt := p.parseDeclaration()
+	p.nextToken()
+	var elseStmt ast.Statement
+	if p.currentToken.Type == token.ELSE {
+		p.nextToken()
+		elseStmt = p.parseDeclaration()
+	}
+
+	return ast.If{Condition: condition, Then: thenStmt, Else: elseStmt}
+}
+
+func (p *Parser) parseBlock() ast.Statement {
+	p.nextToken()
+	stmts := []ast.Statement{}
+	for p.currentToken.Type != token.RBRACE {
+		if p.currentToken.Type == token.EOF {
+			panic("Parser error")
+		}
+		stmts = append(stmts, p.parseDeclaration())
+		p.nextToken()
+	}
+
+	return ast.Block{Statements: stmts}
 }
 
 func (p *Parser) parseExpression() ast.Expression {

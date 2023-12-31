@@ -9,6 +9,8 @@ type Statement interface {
 type StatementVisitor interface {
 	VisitVar(s Var)
 	VisitPut(s PutStatement)
+	VisitIf(s If)
+	VisitBlock(s Block)
 	VisitExpression(s ExpressionStatement)
 }
 
@@ -28,6 +30,24 @@ type PutStatement struct {
 
 func (pn PutStatement) Visit(visitor StatementVisitor) {
 	visitor.VisitPut(pn)
+}
+
+type If struct {
+	Condition Expression
+	Then      Statement
+	Else      Statement
+}
+
+func (i If) Visit(visitor StatementVisitor) {
+	visitor.VisitIf(i)
+}
+
+type Block struct {
+	Statements []Statement
+}
+
+func (b Block) Visit(visitor StatementVisitor) {
+	visitor.VisitBlock(b)
 }
 
 type ExpressionStatement struct {
