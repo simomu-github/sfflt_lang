@@ -288,6 +288,43 @@ func TestParseComparison(t *testing.T) {
 	}
 }
 
+func TestParseEquality(t *testing.T) {
+	input := "true != false"
+	lexer := lexer.New(input)
+	parser := New(lexer)
+	expr := parser.parseExpression()
+
+	binary, ok := expr.(ast.Binary)
+
+	if !ok {
+		t.Fatalf("Not Binary")
+	}
+
+	if binary.Operator.Type != token.NOT_EQ {
+		t.Fatalf("Operator not NOT_EQ get: %s", binary.Operator.Type)
+	}
+
+	left, ok := binary.Left.(ast.BooleanLiteral)
+
+	if !ok {
+		t.Fatalf("Left expression does not BooleanLiteral")
+	}
+
+	if left.Value != true {
+		t.Fatalf("Left expression value not match")
+	}
+
+	right, ok := binary.Right.(ast.BooleanLiteral)
+
+	if !ok {
+		t.Fatalf("Right expression does not BooleanLiteral")
+	}
+
+	if right.Value != false {
+		t.Fatalf("Right expression value not match")
+	}
+}
+
 func TestParsePut(t *testing.T) {
 	input := "putn 1;"
 	lexer := lexer.New(input)

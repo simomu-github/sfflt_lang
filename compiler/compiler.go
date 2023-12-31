@@ -65,9 +65,37 @@ func (c *Compiler) VisitBinaryExpression(e ast.Binary) {
 	case token.LT, token.LTEQ, token.GT, token.GTEQ:
 		c.comparison(e)
 		return
+	case token.EQ, token.NOT_EQ:
+		c.equality(e)
+		return
 	}
 
 	c.instructions = append(c.instructions, instruction)
+}
+
+func (c *Compiler) equality(e ast.Binary) {
+	c.instructions = append(c.instructions, "LFFL")
+
+	zeroJumpOffset := c.reserveJumpLabel("TLF")
+
+	if e.Operator.Type == token.EQ {
+		c.instructions = append(c.instructions, "FFFFT")
+	} else {
+		c.instructions = append(c.instructions, "FFFLT")
+	}
+	endJumpOffset := c.reserveJumpLabel("TFT")
+
+	zeroLabel := c.markJumpLabel()
+	c.confirmJumpLabel(zeroJumpOffset, zeroLabel)
+
+	if e.Operator.Type == token.EQ {
+		c.instructions = append(c.instructions, "FFFLT")
+	} else {
+		c.instructions = append(c.instructions, "FFFFT")
+	}
+
+	endLabel := c.markJumpLabel()
+	c.confirmJumpLabel(endJumpOffset, endLabel)
 }
 
 func (c *Compiler) comparison(e ast.Binary) {
