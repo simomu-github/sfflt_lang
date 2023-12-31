@@ -142,7 +142,7 @@ func (p *Parser) parseFactor() ast.Expression {
 
 func (p *Parser) parseUnary() ast.Expression {
 	switch p.currentToken.Type {
-	case token.MINUS:
+	case token.MINUS, token.BANG:
 		operator := p.currentToken
 		p.nextToken()
 		return ast.Unary{Operator: operator, Right: p.parsePrimary()}

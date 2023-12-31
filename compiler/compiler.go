@@ -112,6 +112,23 @@ func (c *Compiler) VisitUnaryExpression(e ast.Unary) {
 		return
 	}
 
+	if e.Operator.Type == token.BANG {
+		e.Right.Visit(c)
+		zeroJumpOffset := c.reserveJumpLabel("TLF")
+
+		c.instructions = append(c.instructions, "FFFFT")
+		endJumpOffset := c.reserveJumpLabel("TFT")
+
+		zeroLabel := c.markJumpLabel()
+		c.confirmJumpLabel(zeroJumpOffset, zeroLabel)
+
+		c.instructions = append(c.instructions, "FFFLT")
+
+		endLabel := c.markJumpLabel()
+		c.confirmJumpLabel(endJumpOffset, endLabel)
+		return
+	}
+
 	e.Right.Visit(c)
 }
 

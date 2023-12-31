@@ -33,6 +33,32 @@ func TestCompilePrimary(t *testing.T) {
 	}
 }
 
+func TestCompileBang(t *testing.T) {
+	input := "!true;"
+	lexer := lexer.New(input)
+	parser := parser.New(lexer)
+	exprs := parser.ParseProgram()
+	compiler := New(exprs)
+
+	instructions := compiler.Compile()
+	expects := []string{
+		"FFFLT",
+		"TLFLLFFFLLLLFLLFFLFFT",
+		"FFFFT",
+		"TFTLLFFFLLLLFLLFFLLFT",
+		"TFFLLFFFLLLLFLLFFLFFT",
+		"FFFLT",
+		"TFFLLFFFLLLLFLLFFLLFT",
+		"FTT",
+	}
+
+	for i, expect := range expects {
+		if instructions[i] != expect {
+			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, instructions[i])
+		}
+	}
+}
+
 func TestCompileUnary(t *testing.T) {
 	input := "-10;"
 	lexer := lexer.New(input)
