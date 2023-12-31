@@ -121,9 +121,9 @@ func (p *Parser) parseIf() ast.Statement {
 	p.nextToken()
 
 	thenStmt := p.parseDeclaration()
-	p.nextToken()
 	var elseStmt ast.Statement
-	if p.currentToken.Type == token.ELSE {
+	if p.peekToken.Type == token.ELSE {
+		p.nextToken()
 		p.nextToken()
 		elseStmt = p.parseDeclaration()
 	}
