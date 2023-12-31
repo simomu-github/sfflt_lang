@@ -112,6 +112,8 @@ func (c *Compiler) VisitBinaryExpression(e ast.Binary) {
 		instruction = "LFFT"
 	case token.SLASH:
 		instruction = "LFLF"
+	case token.MOD:
+		instruction = "LFLL"
 	case token.LT, token.LTEQ, token.GT, token.GTEQ:
 		c.comparison(e)
 		return

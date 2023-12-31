@@ -36,6 +36,8 @@ func (l *Lexer) ScanToken() token.Token {
 		return l.makeToken(token.ASTERISK, string(char))
 	case '/':
 		return l.makeToken(token.SLASH, string(char))
+	case '%':
+		return l.makeToken(token.MOD, string(char))
 
 	case '(':
 		return l.makeToken(token.LPAREN, string(char))
@@ -154,7 +156,7 @@ func (l *Lexer) scanNumber() token.Token {
 }
 
 func (l *Lexer) scanIdentifier() token.Token {
-	for isLetter(l.peekChar()) {
+	for isLetter(l.peekChar()) || isDigit(l.peekChar()) {
 		l.readChar()
 	}
 

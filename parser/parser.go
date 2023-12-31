@@ -232,7 +232,7 @@ func (p *Parser) parseTerm() ast.Expression {
 func (p *Parser) parseFactor() ast.Expression {
 	expr := p.parseUnary()
 	switch p.peekToken.Type {
-	case token.ASTERISK, token.SLASH:
+	case token.ASTERISK, token.SLASH, token.MOD:
 		p.nextToken()
 		operator := p.currentToken
 		p.nextToken()

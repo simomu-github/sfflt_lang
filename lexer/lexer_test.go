@@ -8,12 +8,12 @@ import (
 
 func TestScanToken(t *testing.T) {
 	input := `(){};
-+-*/=!
++-*/%=!
 ==
 !=
 <><=>=
 'a'123
-var if else while true false putn putc getn getc hoge_fuga
+var if else while true false putn putc getn getc hoge_fuga0
 `
 
 	expects := []struct {
@@ -32,8 +32,9 @@ var if else while true false putn putc getn getc hoge_fuga
 		{token.MINUS, "-", 2, 2},
 		{token.ASTERISK, "*", 2, 3},
 		{token.SLASH, "/", 2, 4},
-		{token.ASSIGN, "=", 2, 5},
-		{token.BANG, "!", 2, 6},
+		{token.MOD, "%", 2, 5},
+		{token.ASSIGN, "=", 2, 6},
+		{token.BANG, "!", 2, 7},
 
 		{token.EQ, "==", 3, 2},
 		{token.NOT_EQ, "!=", 4, 2},
@@ -56,7 +57,7 @@ var if else while true false putn putc getn getc hoge_fuga
 		{token.PUTC, "putc", 7, 38},
 		{token.GETN, "getn", 7, 43},
 		{token.GETC, "getc", 7, 48},
-		{token.IDENT, "hoge_fuga", 7, 58},
+		{token.IDENT, "hoge_fuga0", 7, 59},
 
 		{token.EOF, string(byte(0)), 8, 0},
 	}

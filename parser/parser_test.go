@@ -417,7 +417,31 @@ func TestParseBlock(t *testing.T) {
 	input := "{ a; b; }"
 	lexer := lexer.New(input)
 	parser := New(lexer)
-	parser.ParseProgram()
+	stmts := parser.ParseProgram()
+
+	group := stmts[0].(ast.Block)
+
+	stmt := group.Statements[0].(ast.ExpressionStatement)
+	variable, ok := stmt.Expression.(ast.Variable)
+
+	if !ok {
+		t.Fatalf("Not Variable")
+	}
+
+	if variable.Identifier.Literal != "a" {
+		t.Fatalf("Identifier literal is not match")
+	}
+
+	stmt = group.Statements[1].(ast.ExpressionStatement)
+	variable, ok = stmt.Expression.(ast.Variable)
+
+	if !ok {
+		t.Fatalf("Not Variable")
+	}
+
+	if variable.Identifier.Literal != "b" {
+		t.Fatalf("Identifier literal is not match")
+	}
 }
 
 func TestParseIf(t *testing.T) {
