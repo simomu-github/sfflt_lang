@@ -39,6 +39,9 @@ const (
 
 	PUTN = "PUTN"
 	PUTC = "PUTC"
+
+	GETN = "GETN"
+	GETC = "GETC"
 )
 
 type TokenType string
@@ -60,6 +63,8 @@ var keywords = map[string]TokenType{
 
 	"putn": PUTN,
 	"putc": PUTC,
+	"getn": GETN,
+	"getc": GETC,
 }
 
 func LookupIdent(ident string) TokenType {

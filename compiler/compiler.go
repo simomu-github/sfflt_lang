@@ -246,6 +246,19 @@ func (c *Compiler) VisitVariable(e ast.Variable) {
 	c.instructions = append(c.instructions, "LLL")
 }
 
+func (c *Compiler) VisitGet(s ast.Get) {
+	tmp := stringToBinary("t" + "tmp")
+	c.instructions = append(c.instructions, "FFF"+tmp+"T")
+	if s.Token.Type == token.GETN {
+		c.instructions = append(c.instructions, "LTLL")
+	} else {
+		c.instructions = append(c.instructions, "LTLF")
+	}
+
+	c.instructions = append(c.instructions, "FFF"+tmp+"T")
+	c.instructions = append(c.instructions, "LLL")
+}
+
 func (c *Compiler) reserveJumpLabel(instruction string) int {
 	c.instructions = append(c.instructions, instruction+"?T")
 	return len(c.instructions) - 1

@@ -8,7 +8,7 @@ import (
 )
 
 func TestCompilePrimary(t *testing.T) {
-	input := "0; 10; 'a'; true; false;"
+	input := "0; 10; 'a'; true; false; getn;"
 	lexer := lexer.New(input)
 	parser := parser.New(lexer)
 	exprs := parser.ParseProgram()
@@ -25,6 +25,11 @@ func TestCompilePrimary(t *testing.T) {
 		"FFFLT",
 		"FTT",
 		"FFFFT",
+		"FTT",
+		"FFFLLLFLFFLLLFLFFLLFLLFLLLLFFFFT",
+		"LTLL",
+		"FFFLLLFLFFLLLFLFFLLFLLFLLLLFFFFT",
+		"LLL",
 		"FTT",
 	}
 

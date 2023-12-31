@@ -80,6 +80,7 @@ type ExpressionVisitor interface {
 	VisitCharLiteral(e CharLiteral)
 	VisitBooleanLiteral(e BooleanLiteral)
 	VisitVariable(e Variable)
+	VisitGet(e Get)
 }
 
 type Assign struct {
@@ -143,4 +144,12 @@ type Variable struct {
 
 func (v Variable) Visit(visitor ExpressionVisitor) {
 	visitor.VisitVariable(v)
+}
+
+type Get struct {
+	Token token.Token
+}
+
+func (g Get) Visit(visitor ExpressionVisitor) {
+	visitor.VisitGet(g)
 }
