@@ -433,3 +433,36 @@ else
 		t.Fatalf("Else value is not match")
 	}
 }
+
+func TestParseWhile(t *testing.T) {
+	input := `while (true) true;`
+	lexer := lexer.New(input)
+	parser := New(lexer)
+	stmt := parser.ParseProgram()
+
+	whileStmt, ok := stmt[0].(ast.While)
+	if !ok {
+		t.Fatalf("Statement is not while")
+	}
+
+	condition, ok := whileStmt.Condition.(ast.BooleanLiteral)
+	if !ok {
+		t.Fatalf("condition is not BooleanLiteral")
+	}
+
+	if condition.Value != true {
+		t.Fatalf("condition value is not match")
+	}
+
+	thenStmt, ok := whileStmt.Body.(ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("Body statement is not ExpressionStatement")
+	}
+	thenExpr, ok := thenStmt.Expression.(ast.BooleanLiteral)
+	if !ok {
+		t.Fatalf("Body expression statement is not BooleanLiteral")
+	}
+	if thenExpr.Value != true {
+		t.Fatalf("Body value is not match")
+	}
+}

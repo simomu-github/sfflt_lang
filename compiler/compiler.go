@@ -62,6 +62,20 @@ func (c *Compiler) VisitIf(s ast.If) {
 	c.confirmJumpLabel(endJumpOffset, endLabel)
 }
 
+func (c *Compiler) VisitWhile(s ast.While) {
+	trueJumpLabel := c.markJumpLabel()
+	s.Condition.Visit(c)
+	endJumpOffset := c.reserveJumpLabel("TLF")
+
+	s.Body.Visit(c)
+
+	trueJumpOffset := c.reserveJumpLabel("TFT")
+	c.confirmJumpLabel(trueJumpOffset, trueJumpLabel)
+
+	endLabel := c.markJumpLabel()
+	c.confirmJumpLabel(endJumpOffset, endLabel)
+}
+
 func (c *Compiler) VisitBlock(s ast.Block) {
 	for _, stmt := range s.Statements {
 		stmt.Visit(c)

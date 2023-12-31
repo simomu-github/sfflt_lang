@@ -74,7 +74,11 @@ func (p *Parser) parseStatement() ast.Statement {
 	}
 
 	if p.currentToken.Type == token.IF {
-		return p.parseIfStatement()
+		return p.parseIf()
+	}
+
+	if p.currentToken.Type == token.WHILE {
+		return p.parseWhile()
 	}
 
 	if p.currentToken.Type == token.LBRACE {
@@ -102,7 +106,7 @@ func (p *Parser) parsePutStatement() ast.Statement {
 	return ast.PutStatement{Token: tok, Expression: expr}
 }
 
-func (p *Parser) parseIfStatement() ast.Statement {
+func (p *Parser) parseIf() ast.Statement {
 	p.nextToken()
 	if p.currentToken.Type != token.LPAREN {
 		panic("Parser error")
@@ -126,6 +130,26 @@ func (p *Parser) parseIfStatement() ast.Statement {
 	}
 
 	return ast.If{Condition: condition, Then: thenStmt, Else: elseStmt}
+}
+
+func (p *Parser) parseWhile() ast.Statement {
+	p.nextToken()
+	if p.currentToken.Type != token.LPAREN {
+		panic("Parser error")
+	}
+	p.nextToken()
+
+	condition := p.parseExpression()
+	p.nextToken()
+
+	if p.currentToken.Type != token.RPAREN {
+		panic("Parser error")
+	}
+	p.nextToken()
+
+	body := p.parseDeclaration()
+
+	return ast.While{Condition: condition, Body: body}
 }
 
 func (p *Parser) parseBlock() ast.Statement {

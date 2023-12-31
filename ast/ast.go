@@ -10,6 +10,7 @@ type StatementVisitor interface {
 	VisitVar(s Var)
 	VisitPut(s PutStatement)
 	VisitIf(s If)
+	VisitWhile(s While)
 	VisitBlock(s Block)
 	VisitExpression(s ExpressionStatement)
 }
@@ -40,6 +41,15 @@ type If struct {
 
 func (i If) Visit(visitor StatementVisitor) {
 	visitor.VisitIf(i)
+}
+
+type While struct {
+	Condition Expression
+	Body      Statement
+}
+
+func (w While) Visit(visitor StatementVisitor) {
+	visitor.VisitWhile(w)
 }
 
 type Block struct {
