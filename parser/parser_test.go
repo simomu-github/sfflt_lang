@@ -351,6 +351,31 @@ func TestParsePut(t *testing.T) {
 	}
 }
 
+func TestParseAssign(t *testing.T) {
+	input := "a = 2"
+	lexer := lexer.New(input)
+	parser := New(lexer)
+	expr := parser.parseExpression()
+
+	assign, ok := expr.(ast.Assign)
+	if !ok {
+		t.Fatalf("Statement is not Assign")
+	}
+
+	target := assign.Target
+	if target.Literal != "a" {
+		t.Fatalf("Target literal is not match")
+	}
+
+	right, ok := assign.Expression.(ast.IntegerLiteral)
+	if !ok {
+		t.Fatalf("assign expression is not IntegerLiteral")
+	}
+	if right.Value != 2 {
+		t.Fatalf("assign value is not match")
+	}
+}
+
 func TestParseVar(t *testing.T) {
 	input := "var a = 1;"
 	lexer := lexer.New(input)

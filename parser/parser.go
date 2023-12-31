@@ -20,7 +20,6 @@ func New(lexer *lexer.Lexer) *Parser {
 	p.nextToken()
 	p.nextToken()
 	return p
-
 }
 
 func (p *Parser) ParseProgram() []ast.Statement {
@@ -167,7 +166,25 @@ func (p *Parser) parseBlock() ast.Statement {
 }
 
 func (p *Parser) parseExpression() ast.Expression {
-	return p.parseEquality()
+	return p.parseAssign()
+}
+
+func (p *Parser) parseAssign() ast.Expression {
+	expr := p.parseEquality()
+
+	switch p.peekToken.Type {
+	case token.ASSIGN:
+		p.nextToken()
+		p.nextToken()
+		right := p.parseComparison()
+		variable, ok := expr.(ast.Variable)
+		if !ok {
+			panic("Parser error")
+		}
+		return ast.Assign{Target: variable.Identifier, Expression: right}
+	}
+
+	return expr
 }
 
 func (p *Parser) parseEquality() ast.Expression {

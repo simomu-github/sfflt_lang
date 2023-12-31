@@ -73,12 +73,22 @@ type Expression interface {
 }
 
 type ExpressionVisitor interface {
+	VisitAssign(a Assign)
 	VisitBinaryExpression(b Binary)
 	VisitUnaryExpression(e Unary)
 	VisitIntegerLiteral(e IntegerLiteral)
 	VisitCharLiteral(e CharLiteral)
 	VisitBooleanLiteral(e BooleanLiteral)
 	VisitVariable(e Variable)
+}
+
+type Assign struct {
+	Target     token.Token
+	Expression Expression
+}
+
+func (a Assign) Visit(visitor ExpressionVisitor) {
+	visitor.VisitAssign(a)
 }
 
 type Binary struct {

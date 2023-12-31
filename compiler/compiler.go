@@ -87,6 +87,18 @@ func (c *Compiler) VisitExpression(s ast.ExpressionStatement) {
 	c.instructions = append(c.instructions, "FTT")
 }
 
+func (c *Compiler) VisitAssign(s ast.Assign) {
+	ident := stringToBinary("g" + s.Target.Literal)
+	c.instructions = append(c.instructions, "FFF"+ident+"T")
+	c.instructions = append(c.instructions, "LLL")
+
+	c.instructions = append(c.instructions, "FTT")
+
+	c.instructions = append(c.instructions, "FFF"+ident+"T")
+	s.Expression.Visit(c)
+	c.instructions = append(c.instructions, "LLF")
+}
+
 func (c *Compiler) VisitBinaryExpression(e ast.Binary) {
 	e.Left.Visit(c)
 	e.Right.Visit(c)

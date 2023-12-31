@@ -221,6 +221,34 @@ func TestCompileEquality(t *testing.T) {
 	}
 }
 
+func TestCompileAssign(t *testing.T) {
+	input := "var a = 1; a = 2;"
+	lexer := lexer.New(input)
+	parser := parser.New(lexer)
+	exprs := parser.ParseProgram()
+	compiler := New(exprs)
+
+	instructions := compiler.Compile()
+	expects := []string{
+		"FFFLLFFLLLLLFFFFLT",
+		"FFFLT",
+		"LLF",
+		"FFFLLFFLLLLLFFFFLT",
+		"LLL",
+		"FTT",
+		"FFFLLFFLLLLLFFFFLT",
+		"FFFLFT",
+		"LLF",
+		"FTT",
+	}
+
+	for i, expect := range expects {
+		if instructions[i] != expect {
+			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, instructions[i])
+		}
+	}
+}
+
 func TestCompilePut(t *testing.T) {
 	input := "putn -1; putc 'a';"
 	lexer := lexer.New(input)
