@@ -80,25 +80,28 @@ func (c *Compiler) comparison(e ast.Binary) {
 		c.instructions = append(c.instructions, "FTF")
 	}
 
+	zeroJumpOffset := -1
 	if e.Operator.Type == token.LTEQ || e.Operator.Type == token.GTEQ {
-		// c.instructions = append(c.instructions, "TLF"+labelPrefix+trueLabel+"T")
+		zeroJumpOffset = c.reserveJumpLabel("TLF")
 	}
 
-	whenNegative := c.reserveJumpLabel("TLL")
+	negativeJumpOffset := c.reserveJumpLabel("TLL")
 
 	c.instructions = append(c.instructions, "FFFFT")
-	jumpOffset := c.reserveJumpLabel("TFT")
+	endJumpOffset := c.reserveJumpLabel("TFT")
+
+	if zeroJumpOffset >= 0 {
+		zeroLabel := c.markJumpLabel()
+		c.confirmJumpLabel(zeroJumpOffset, zeroLabel)
+		c.instructions = append(c.instructions, "FTT")
+	}
 
 	trueLabel := c.markJumpLabel()
-	c.confirmJumpLabel(whenNegative, trueLabel)
+	c.confirmJumpLabel(negativeJumpOffset, trueLabel)
 	c.instructions = append(c.instructions, "FFFLT")
 
 	endLabel := c.markJumpLabel()
-	c.confirmJumpLabel(jumpOffset, endLabel)
-
-	if e.Operator.Type == token.LTEQ || e.Operator.Type == token.GTEQ {
-		c.instructions = append(c.instructions, "FTT")
-	}
+	c.confirmJumpLabel(endJumpOffset, endLabel)
 }
 
 func (c *Compiler) VisitUnaryExpression(e ast.Unary) {
