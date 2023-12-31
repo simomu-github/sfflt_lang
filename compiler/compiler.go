@@ -62,9 +62,34 @@ func (c *Compiler) VisitBinaryExpression(e ast.Binary) {
 		instruction = "LFFT"
 	case token.SLASH:
 		instruction = "LFLF"
+	case token.LT, token.LTEQ, token.GT, token.GTEQ:
+		c.comparison(e)
+		return
 	}
 
 	c.instructions = append(c.instructions, instruction)
+}
+
+func (c *Compiler) comparison(e ast.Binary) {
+	if e.Operator.Type == token.GT {
+		c.instructions = append(c.instructions, "FTL")
+	}
+	c.instructions = append(c.instructions, "LFFL")
+
+	labelPrefix := identToGlobalVariable("cl")
+
+	endLabel := intToBinary(int64((len(c.instructions) + 6)))
+
+	trueLabel := intToBinary(int64(len(c.instructions) + 4))
+	c.instructions = append(c.instructions, "TLL"+labelPrefix+trueLabel+"T")
+
+	c.instructions = append(c.instructions, "FFFFT")
+	c.instructions = append(c.instructions, "TFT"+labelPrefix+endLabel+"T")
+
+	c.instructions = append(c.instructions, "TFF"+labelPrefix+trueLabel+"T")
+	c.instructions = append(c.instructions, "FFFLT")
+
+	c.instructions = append(c.instructions, "TFF"+labelPrefix+endLabel+"T")
 }
 
 func (c *Compiler) VisitUnaryExpression(e ast.Unary) {
@@ -121,26 +146,6 @@ func identToGlobalVariable(ident string) string {
 	}
 
 	return result
-}
-
-func intToBin(value int64) string {
-	binary := []string{}
-
-	decimal := value
-	for decimal != 0 {
-		bin := decimal % 2
-		if bin == 0 {
-			binary = append(binary, "F")
-		} else {
-			binary = append(binary, "L")
-		}
-		decimal /= 2
-	}
-
-	for i := 0; i < len(binary)/2; i++ {
-		binary[i], binary[len(binary)-i-1] = binary[len(binary)-i-1], binary[i]
-	}
-	return strings.Join(binary, "")
 }
 
 func intToBinary(value int64) string {

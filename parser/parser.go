@@ -95,7 +95,21 @@ func (p *Parser) parsePutStatement() ast.Statement {
 }
 
 func (p *Parser) parseExpression() ast.Expression {
-	return p.parseTerm()
+	return p.parseComparison()
+}
+
+func (p *Parser) parseComparison() ast.Expression {
+	expr := p.parseTerm()
+	switch p.peekToken.Type {
+	case token.LT, token.LTEQ, token.GT, token.GTEQ:
+		p.nextToken()
+		operator := p.currentToken
+		p.nextToken()
+		right := p.parseTerm()
+		return ast.Binary{Left: expr, Operator: operator, Right: right}
+	}
+
+	return expr
 }
 
 func (p *Parser) parseTerm() ast.Expression {

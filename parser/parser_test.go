@@ -233,6 +233,61 @@ func TestParseTerm(t *testing.T) {
 	}
 }
 
+func TestParseComparison(t *testing.T) {
+	input := "(a + b) < c"
+	lexer := lexer.New(input)
+	parser := New(lexer)
+	expr := parser.parseExpression()
+
+	binary, ok := expr.(ast.Binary)
+
+	if !ok {
+		t.Fatalf("Not Binary")
+	}
+
+	if binary.Operator.Type != token.LT {
+		t.Fatalf("Operator not LT get: %s", binary.Operator.Type)
+	}
+
+	left, ok := binary.Left.(ast.Binary)
+
+	if !ok {
+		t.Fatalf("Left expression does not Binary")
+	}
+
+	if left.Operator.Type != token.PLUS {
+		t.Fatalf("Left expression operator type does not match")
+	}
+
+	ll, ok := left.Left.(ast.Variable)
+	if !ok {
+		t.Fatalf("Left left expression does not Variable")
+	}
+
+	if ll.Identifier.Literal != "a" {
+		t.Fatalf("Left left variable does not match")
+	}
+
+	lr, ok := left.Right.(ast.Variable)
+	if !ok {
+		t.Fatalf("Left right expression does not Variable")
+	}
+
+	if lr.Identifier.Literal != "b" {
+		t.Fatalf("Left right variable identifier does not match")
+	}
+
+	right, ok := binary.Right.(ast.Variable)
+
+	if !ok {
+		t.Fatalf("Right expression does not Variable")
+	}
+
+	if right.Identifier.Literal != "c" {
+		t.Fatalf("Right variable identifier does not match")
+	}
+}
+
 func TestParsePut(t *testing.T) {
 	input := "putn 1;"
 	lexer := lexer.New(input)
