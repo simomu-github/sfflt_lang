@@ -28,7 +28,7 @@ func (c *Compiler) Compile() []string {
 }
 
 func (c *Compiler) VisitVar(s ast.Var) {
-	ident := identToGlobalVariable("g" + s.Identifier.Literal)
+	ident := stringToBinary("g" + s.Identifier.Literal)
 	c.instructions = append(c.instructions, "FFF"+ident+"T")
 	s.Expression.Visit(c)
 	c.instructions = append(c.instructions, "LLF")
@@ -71,25 +71,34 @@ func (c *Compiler) VisitBinaryExpression(e ast.Binary) {
 }
 
 func (c *Compiler) comparison(e ast.Binary) {
-	if e.Operator.Type == token.GT {
+	if e.Operator.Type == token.GT || e.Operator.Type == token.GTEQ {
 		c.instructions = append(c.instructions, "FTL")
 	}
 	c.instructions = append(c.instructions, "LFFL")
 
-	labelPrefix := identToGlobalVariable("cl")
+	if e.Operator.Type == token.LTEQ || e.Operator.Type == token.GTEQ {
+		c.instructions = append(c.instructions, "FTF")
+	}
 
-	endLabel := intToBinary(int64((len(c.instructions) + 6)))
+	if e.Operator.Type == token.LTEQ || e.Operator.Type == token.GTEQ {
+		// c.instructions = append(c.instructions, "TLF"+labelPrefix+trueLabel+"T")
+	}
 
-	trueLabel := intToBinary(int64(len(c.instructions) + 4))
-	c.instructions = append(c.instructions, "TLL"+labelPrefix+trueLabel+"T")
+	whenNegative := c.reserveJumpLabel("TLL")
 
 	c.instructions = append(c.instructions, "FFFFT")
-	c.instructions = append(c.instructions, "TFT"+labelPrefix+endLabel+"T")
+	jumpOffset := c.reserveJumpLabel("TFT")
 
-	c.instructions = append(c.instructions, "TFF"+labelPrefix+trueLabel+"T")
+	trueLabel := c.markJumpLabel()
+	c.confirmJumpLabel(whenNegative, trueLabel)
 	c.instructions = append(c.instructions, "FFFLT")
 
-	c.instructions = append(c.instructions, "TFF"+labelPrefix+endLabel+"T")
+	endLabel := c.markJumpLabel()
+	c.confirmJumpLabel(jumpOffset, endLabel)
+
+	if e.Operator.Type == token.LTEQ || e.Operator.Type == token.GTEQ {
+		c.instructions = append(c.instructions, "FTT")
+	}
 }
 
 func (c *Compiler) VisitUnaryExpression(e ast.Unary) {
@@ -134,12 +143,29 @@ func (c *Compiler) VisitBooleanLiteral(e ast.BooleanLiteral) {
 }
 
 func (c *Compiler) VisitVariable(e ast.Variable) {
-	ident := identToGlobalVariable("g" + e.Identifier.Literal)
+	ident := stringToBinary("g" + e.Identifier.Literal)
 	c.instructions = append(c.instructions, "FFF"+ident+"T")
 	c.instructions = append(c.instructions, "LLL")
 }
 
-func identToGlobalVariable(ident string) string {
+func (c *Compiler) reserveJumpLabel(instruction string) int {
+	c.instructions = append(c.instructions, instruction+"?T")
+	return len(c.instructions) - 1
+}
+
+func (c *Compiler) markJumpLabel() string {
+	labelPrefix := stringToBinary("cl")
+	label := intToBinary(int64(len(c.instructions)))
+	c.instructions = append(c.instructions, "TFF"+labelPrefix+label+"T")
+
+	return labelPrefix + label
+}
+
+func (c *Compiler) confirmJumpLabel(offset int, label string) {
+	c.instructions[offset] = strings.Replace(c.instructions[offset], "?", label, 1)
+}
+
+func stringToBinary(ident string) string {
 	result := ""
 	for _, char := range ident {
 		result += intToBinary(int64(char))
