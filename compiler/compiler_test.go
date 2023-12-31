@@ -8,7 +8,7 @@ import (
 )
 
 func TestCompilePrimary(t *testing.T) {
-	input := "10; 'a'; true; false;"
+	input := "0; 10; 'a'; true; false;"
 	lexer := lexer.New(input)
 	parser := parser.New(lexer)
 	exprs := parser.ParseProgram()
@@ -16,6 +16,8 @@ func TestCompilePrimary(t *testing.T) {
 
 	instructions := compiler.Compile()
 	expects := []string{
+		"FFFFT",
+		"FTT",
 		"FFFLFLFT",
 		"FTT",
 		"FFFLLFFFFLT",
@@ -279,12 +281,12 @@ func TestCompileWhile(t *testing.T) {
 
 	instructions := compiler.Compile()
 	expects := []string{
-		"TFFLLFFFLLLLFLLFFT",    // mark label loop
+		"TFFLLFFFLLLLFLLFFFT",   // mark label loop
 		"FFFLT",                 // condition
 		"TLFLLFFFLLLLFLLFFLLFT", // jump label when zero
 		"FFFLT",                 // body statement
 		"FTT",                   // body statement
-		"TFTLLFFFLLLLFLLFFT",    // jump label to loop
+		"TFTLLFFFLLLLFLLFFFT",   // jump label to loop
 		"TFFLLFFFLLLLFLLFFLLFT", // mark label zero
 	}
 

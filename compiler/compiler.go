@@ -264,7 +264,7 @@ func intToBinary(value int64) string {
 	binary := []string{}
 
 	decimal := value
-	for decimal != 0 {
+	for {
 		bin := decimal % 2
 		if bin == 0 {
 			binary = append(binary, "F")
@@ -272,6 +272,10 @@ func intToBinary(value int64) string {
 			binary = append(binary, "L")
 		}
 		decimal /= 2
+
+		if decimal == 0 {
+			break
+		}
 	}
 
 	for i := 0; i < len(binary)/2; i++ {
