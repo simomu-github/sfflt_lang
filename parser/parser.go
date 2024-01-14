@@ -13,12 +13,13 @@ type Parser struct {
 	lexer        *lexer.Lexer
 	currentToken token.Token
 	peekToken    token.Token
+	isFunction   bool
 	hasError     bool
 	Errors       []string
 }
 
 func New(lexer *lexer.Lexer) *Parser {
-	p := &Parser{lexer: lexer, Errors: []string{}}
+	p := &Parser{lexer: lexer, isFunction: false, Errors: []string{}}
 	p.nextToken()
 	p.nextToken()
 	return p
@@ -86,6 +87,7 @@ func (p *Parser) parseVarDeclaration() ast.Statement {
 }
 
 func (p *Parser) parseFunctionDecaration() ast.Statement {
+	p.isFunction = true
 	p.nextToken()
 
 	if p.currentToken.Type != token.IDENT {
@@ -116,6 +118,8 @@ func (p *Parser) parseFunctionDecaration() ast.Statement {
 
 	body := p.parseBlock().(ast.Block)
 
+	p.isFunction = false
+
 	return ast.Function{Name: name, Body: body.Statements}
 }
 
@@ -135,6 +139,10 @@ func (p *Parser) parseStatement() ast.Statement {
 
 	if p.currentToken.Type == token.LBRACE {
 		return p.parseBlock()
+	}
+
+	if p.currentToken.Type == token.RETURN {
+		return p.parseReturn()
 	}
 
 	expr := p.parseExpression()
@@ -158,6 +166,23 @@ func (p *Parser) parsePutStatement() ast.Statement {
 	p.nextToken()
 
 	return ast.PutStatement{Token: tok, Expression: expr}
+}
+
+func (p *Parser) parseReturn() ast.Statement {
+	if !p.isFunction {
+		p.parseError(p.currentToken, "Can not return top-level code.")
+		return nil
+	}
+
+	p.nextToken()
+	expr := p.parseExpression()
+	if p.peekToken.Type != token.SEMICOLON {
+		p.parseError(p.currentToken, "Expect ';' after statement.")
+		return nil
+	}
+	p.nextToken()
+
+	return ast.Return{Value: expr}
 }
 
 func (p *Parser) parseIf() ast.Statement {

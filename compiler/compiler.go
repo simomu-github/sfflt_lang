@@ -72,6 +72,11 @@ func (c *Compiler) VisitPut(s ast.PutStatement) {
 	}
 }
 
+func (c *Compiler) VisitReturn(s ast.Return) {
+	s.Value.Visit(c)
+	c.addInstruction(ENDSUB)
+}
+
 func (c *Compiler) VisitIf(s ast.If) {
 	s.Condition.Visit(c)
 

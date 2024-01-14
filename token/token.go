@@ -31,13 +31,14 @@ const (
 	LBRACE = "{"
 	RBRACE = "}"
 
-	VAR   = "VAR"
-	FUNC  = "FUNC"
-	TRUE  = "TRUE"
-	FALSE = "FALSE"
-	IF    = "IF"
-	ELSE  = "ELSE"
-	WHILE = "WHILE"
+	VAR    = "VAR"
+	FUNC   = "FUNC"
+	TRUE   = "TRUE"
+	FALSE  = "FALSE"
+	IF     = "IF"
+	ELSE   = "ELSE"
+	WHILE  = "WHILE"
+	RETURN = "RETURN"
 
 	PUTN = "PUTN"
 	PUTC = "PUTC"
@@ -56,13 +57,14 @@ type Token struct {
 }
 
 var keywords = map[string]TokenType{
-	"var":   VAR,
-	"func":  FUNC,
-	"true":  TRUE,
-	"false": FALSE,
-	"if":    IF,
-	"else":  ELSE,
-	"while": WHILE,
+	"var":    VAR,
+	"func":   FUNC,
+	"true":   TRUE,
+	"false":  FALSE,
+	"if":     IF,
+	"else":   ELSE,
+	"while":  WHILE,
+	"return": RETURN,
 
 	"putn": PUTN,
 	"putc": PUTC,

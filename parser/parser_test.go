@@ -378,6 +378,34 @@ func TestParsePut(t *testing.T) {
 	}
 }
 
+func TestParseReturn(t *testing.T) {
+	input := "func test() { return 1; }"
+	lexer := lexer.New("script", input)
+	parser := New(lexer)
+	stmt := parser.ParseProgram()
+
+	funcStmt, ok := stmt[0].(ast.Function)
+	if !ok {
+		t.Fatalf("Statement is not function")
+	}
+
+	r, ok := funcStmt.Body[0].(ast.Return)
+
+	if !ok {
+		t.Fatalf("Body is not Return")
+	}
+
+	intLiteral, ok := r.Value.(ast.IntegerLiteral)
+
+	if !ok {
+		t.Fatalf("Expression is not IntegerLiteral")
+	}
+
+	if intLiteral.Value != 1 {
+		t.Fatalf("IntegerLiteral value is not match")
+	}
+}
+
 func TestParseAssign(t *testing.T) {
 	input := "a = 2"
 	lexer := lexer.New("script", input)

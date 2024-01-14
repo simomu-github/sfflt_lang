@@ -398,3 +398,29 @@ func TestCompileFunction(t *testing.T) {
 		}
 	}
 }
+
+func TestCompileReturn(t *testing.T) {
+	input := "func a() { return 1; } a();"
+	lexer := lexer.New("script", input)
+	parser := parser.New(lexer)
+	exprs := parser.ParseProgram()
+	compiler := New(exprs)
+
+	instructions := compiler.Compile()
+	expects := []string{
+		"TFLLLFFLLLLLFFLLFLLFFFFLT",
+		"FTT",
+		"TTT",
+		"TFFLLFFLLLLLFFLLFLLFFFFLT",
+		"FFFLT",
+		"TLT",
+		"FFFFT",
+		"TLT",
+	}
+
+	for i, expect := range expects {
+		if instructions[i] != expect {
+			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, instructions[i])
+		}
+	}
+}
