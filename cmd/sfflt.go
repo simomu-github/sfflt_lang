@@ -27,9 +27,16 @@ func Compile(path string) error {
 		return err
 	}
 
-	lexer := lexer.New(string(bytes))
+	lexer := lexer.New(path, string(bytes))
 	parser := parser.New(lexer)
 	statements := parser.ParseProgram()
+	if parser.HadErrors() {
+		for _, err := range parser.Errors {
+			fmt.Fprintf(os.Stderr, err)
+		}
+		return nil
+	}
+
 	compiler := compiler.New(statements)
 	instructions := compiler.Compile()
 	outputFilename := getFilenameWithoutExt(path) + ".fflt"

@@ -3,7 +3,8 @@ package lexer
 import "github.com/simomu-github/sfflt_lang/token"
 
 type Lexer struct {
-	source string
+	Filename string
+	source   string
 
 	start   int
 	current int
@@ -11,13 +12,14 @@ type Lexer struct {
 	column  int
 }
 
-func New(source string) *Lexer {
+func New(filename string, source string) *Lexer {
 	return &Lexer{
-		source:  source,
-		start:   0,
-		current: 0,
-		line:    1,
-		column:  0,
+		Filename: filename,
+		source:   source,
+		start:    0,
+		current:  0,
+		line:     1,
+		column:   0,
 	}
 }
 

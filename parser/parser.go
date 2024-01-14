@@ -13,10 +13,12 @@ type Parser struct {
 	lexer        *lexer.Lexer
 	currentToken token.Token
 	peekToken    token.Token
+	hasError     bool
+	Errors       []string
 }
 
 func New(lexer *lexer.Lexer) *Parser {
-	p := &Parser{lexer: lexer}
+	p := &Parser{lexer: lexer, Errors: []string{}}
 	p.nextToken()
 	p.nextToken()
 	return p
@@ -35,7 +37,17 @@ func (p *Parser) ParseProgram() []ast.Statement {
 	return statements
 }
 
+func (p *Parser) HadErrors() bool {
+	return len(p.Errors) != 0
+}
+
 func (p *Parser) parseDeclaration() ast.Statement {
+	defer func() {
+		if p.HadErrors() {
+			p.skipStatement()
+		}
+	}()
+
 	if p.currentToken.Type == token.VAR {
 		return p.parseVarDeclaration()
 	}
@@ -46,20 +58,23 @@ func (p *Parser) parseDeclaration() ast.Statement {
 func (p *Parser) parseVarDeclaration() ast.Statement {
 	p.nextToken()
 	if p.currentToken.Type != token.IDENT {
-		panic("Parser error")
+		p.parseError(p.currentToken, "Expect identifier.")
+		return nil
 	}
 	identifier := p.currentToken
 	p.nextToken()
 
 	if p.currentToken.Type != token.ASSIGN {
-		panic("Parser error")
+		p.parseError(p.currentToken, "Expect '=' after identifier.")
+		return nil
 	}
 	p.nextToken()
 
 	expr := p.parseExpression()
 
 	if p.peekToken.Type != token.SEMICOLON {
-		panic("Parser error")
+		p.parseError(p.currentToken, "Expect ';' after statement.")
+		return nil
 	}
 	p.nextToken()
 
@@ -86,7 +101,8 @@ func (p *Parser) parseStatement() ast.Statement {
 
 	expr := p.parseExpression()
 	if p.peekToken.Type != token.SEMICOLON {
-		panic("Parser error")
+		p.parseError(p.currentToken, "Expect ';' after statement.")
+		return nil
 	}
 	p.nextToken()
 
@@ -98,7 +114,8 @@ func (p *Parser) parsePutStatement() ast.Statement {
 	p.nextToken()
 	expr := p.parseExpression()
 	if p.peekToken.Type != token.SEMICOLON {
-		panic("Parser error")
+		p.parseError(p.currentToken, "Expect ';' after statement.")
+		return nil
 	}
 	p.nextToken()
 
@@ -108,7 +125,8 @@ func (p *Parser) parsePutStatement() ast.Statement {
 func (p *Parser) parseIf() ast.Statement {
 	p.nextToken()
 	if p.currentToken.Type != token.LPAREN {
-		panic("Parser error")
+		p.parseError(p.currentToken, "Expect '(' after if.")
+		return nil
 	}
 	p.nextToken()
 
@@ -116,7 +134,8 @@ func (p *Parser) parseIf() ast.Statement {
 	p.nextToken()
 
 	if p.currentToken.Type != token.RPAREN {
-		panic("Parser error")
+		p.parseError(p.currentToken, "Expect ')' after if condition.")
+		return nil
 	}
 	p.nextToken()
 
@@ -134,7 +153,8 @@ func (p *Parser) parseIf() ast.Statement {
 func (p *Parser) parseWhile() ast.Statement {
 	p.nextToken()
 	if p.currentToken.Type != token.LPAREN {
-		panic("Parser error")
+		p.parseError(p.currentToken, "Expect '(' after while.")
+		return nil
 	}
 	p.nextToken()
 
@@ -142,7 +162,8 @@ func (p *Parser) parseWhile() ast.Statement {
 	p.nextToken()
 
 	if p.currentToken.Type != token.RPAREN {
-		panic("Parser error")
+		p.parseError(p.currentToken, "Expect ')' after while condition.")
+		return nil
 	}
 	p.nextToken()
 
@@ -156,7 +177,8 @@ func (p *Parser) parseBlock() ast.Statement {
 	stmts := []ast.Statement{}
 	for p.currentToken.Type != token.RBRACE {
 		if p.currentToken.Type == token.EOF {
-			panic("Parser error")
+			p.parseError(p.currentToken, "Expect '}' after statements.")
+			return nil
 		}
 		stmts = append(stmts, p.parseDeclaration())
 		p.nextToken()
@@ -179,7 +201,8 @@ func (p *Parser) parseAssign() ast.Expression {
 		right := p.parseComparison()
 		variable, ok := expr.(ast.Variable)
 		if !ok {
-			panic("Parser error")
+			p.parseError(p.currentToken, "Invalid assignment target.")
+			return nil
 		}
 		return ast.Assign{Target: variable.Identifier, Expression: right}
 	}
@@ -271,14 +294,14 @@ func (p *Parser) parsePrimary() ast.Expression {
 		expr := p.parseExpression()
 		p.nextToken()
 		if p.currentToken.Type != token.RPAREN {
-			// TODO: parser error
-			panic(fmt.Sprintf("Parser Error at %s", p.currentToken.Type))
+			p.parseError(p.currentToken, "Expect ')' after expression.")
+			return nil
 		}
 		return expr
 	}
 
-	// TODO: parser error
-	panic("Parser Error")
+	p.parseError(p.currentToken, "Unexpect token")
+	return nil
 }
 
 func (p *Parser) parseIntegerLiteral() ast.Expression {
@@ -289,4 +312,32 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 func (p *Parser) nextToken() {
 	p.currentToken = p.peekToken
 	p.peekToken = p.lexer.ScanToken()
+}
+
+func (p *Parser) parseError(tok token.Token, message string) {
+	var position string
+	if tok.Type == token.EOF {
+		position = "at end"
+	} else {
+		position = "at '" + tok.Literal + "'"
+	}
+
+	p.Errors = append(
+		p.Errors,
+		fmt.Sprintf("%s:%d Error %s: %s\n", p.lexer.Filename, tok.Line, position, message),
+	)
+}
+
+func (p *Parser) skipStatement() {
+	for p.currentToken.Type == token.EOF {
+		if p.currentToken.Type == token.SEMICOLON {
+			return
+		}
+
+		switch p.peekToken.Type {
+		case token.VAR, token.IF, token.WHILE, token.PUTN, token.PUTC, token.GETN, token.GETC:
+			return
+		}
+		p.nextToken()
+	}
 }
