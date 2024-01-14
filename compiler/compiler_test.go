@@ -9,7 +9,7 @@ import (
 
 func TestCompilePrimary(t *testing.T) {
 	input := "0; 10; 'a'; true; false; getn;"
-	lexer := lexer.New(input)
+	lexer := lexer.New("script", input)
 	parser := parser.New(lexer)
 	exprs := parser.ParseProgram()
 	compiler := New(exprs)
@@ -42,7 +42,7 @@ func TestCompilePrimary(t *testing.T) {
 
 func TestCompileBang(t *testing.T) {
 	input := "!true;"
-	lexer := lexer.New(input)
+	lexer := lexer.New("script", input)
 	parser := parser.New(lexer)
 	exprs := parser.ParseProgram()
 	compiler := New(exprs)
@@ -68,7 +68,7 @@ func TestCompileBang(t *testing.T) {
 
 func TestCompileUnary(t *testing.T) {
 	input := "-10;"
-	lexer := lexer.New(input)
+	lexer := lexer.New("script", input)
 	parser := parser.New(lexer)
 	exprs := parser.ParseProgram()
 	compiler := New(exprs)
@@ -90,7 +90,7 @@ func TestCompileUnary(t *testing.T) {
 
 func TestCompileFactor(t *testing.T) {
 	input := "2 * -3;"
-	lexer := lexer.New(input)
+	lexer := lexer.New("script", input)
 	parser := parser.New(lexer)
 	exprs := parser.ParseProgram()
 	compiler := New(exprs)
@@ -114,7 +114,7 @@ func TestCompileFactor(t *testing.T) {
 
 func TestCompileTerm(t *testing.T) {
 	input := "(4 - 3) * (2 + 1);"
-	lexer := lexer.New(input)
+	lexer := lexer.New("script", input)
 	parser := parser.New(lexer)
 	exprs := parser.ParseProgram()
 	compiler := New(exprs)
@@ -140,7 +140,7 @@ func TestCompileTerm(t *testing.T) {
 
 func TestCompileComparison(t *testing.T) {
 	input := "1 > 2;"
-	lexer := lexer.New(input)
+	lexer := lexer.New("script", input)
 	parser := parser.New(lexer)
 	exprs := parser.ParseProgram()
 	compiler := New(exprs)
@@ -168,7 +168,7 @@ func TestCompileComparison(t *testing.T) {
 
 func TestCompileComparisonWithEqual(t *testing.T) {
 	input := "1 >= 2;"
-	lexer := lexer.New(input)
+	lexer := lexer.New("script", input)
 	parser := parser.New(lexer)
 	exprs := parser.ParseProgram()
 	compiler := New(exprs)
@@ -200,7 +200,7 @@ func TestCompileComparisonWithEqual(t *testing.T) {
 
 func TestCompileEquality(t *testing.T) {
 	input := "1 != 2;"
-	lexer := lexer.New(input)
+	lexer := lexer.New("script", input)
 	parser := parser.New(lexer)
 	exprs := parser.ParseProgram()
 	compiler := New(exprs)
@@ -228,7 +228,7 @@ func TestCompileEquality(t *testing.T) {
 
 func TestCompileAssign(t *testing.T) {
 	input := "var a = 1; a = 2;"
-	lexer := lexer.New(input)
+	lexer := lexer.New("script", input)
 	parser := parser.New(lexer)
 	exprs := parser.ParseProgram()
 	compiler := New(exprs)
@@ -256,7 +256,7 @@ func TestCompileAssign(t *testing.T) {
 
 func TestCompilePut(t *testing.T) {
 	input := "putn -1; putc 'a';"
-	lexer := lexer.New(input)
+	lexer := lexer.New("script", input)
 	parser := parser.New(lexer)
 	exprs := parser.ParseProgram()
 	compiler := New(exprs)
@@ -280,7 +280,7 @@ func TestCompilePut(t *testing.T) {
 
 func TestCompileIf(t *testing.T) {
 	input := "if (true) { 1; } else { 2;}"
-	lexer := lexer.New(input)
+	lexer := lexer.New("script", input)
 	parser := parser.New(lexer)
 	exprs := parser.ParseProgram()
 	compiler := New(exprs)
@@ -307,7 +307,7 @@ func TestCompileIf(t *testing.T) {
 
 func TestCompileWhile(t *testing.T) {
 	input := "while (true) true;"
-	lexer := lexer.New(input)
+	lexer := lexer.New("script", input)
 	parser := parser.New(lexer)
 	exprs := parser.ParseProgram()
 	compiler := New(exprs)
@@ -332,7 +332,7 @@ func TestCompileWhile(t *testing.T) {
 
 func TestCompileGlobalVariable(t *testing.T) {
 	input := "var a = 1; a;"
-	lexer := lexer.New(input)
+	lexer := lexer.New("script", input)
 	parser := parser.New(lexer)
 	exprs := parser.ParseProgram()
 	compiler := New(exprs)

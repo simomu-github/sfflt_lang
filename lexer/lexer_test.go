@@ -62,7 +62,7 @@ var if else while true false putn putc getn getc hoge_fuga0
 		{token.EOF, string(byte(0)), 8, 0},
 	}
 
-	lexer := New(input)
+	lexer := New("script", input)
 
 	for i, expect := range expects {
 		token := lexer.ScanToken()

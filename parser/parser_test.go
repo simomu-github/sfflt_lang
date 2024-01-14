@@ -10,7 +10,7 @@ import (
 
 func TestParsePrimary(t *testing.T) {
 	input := "123; 'a'; true; false; a; getc;"
-	lexer := lexer.New(input)
+	lexer := lexer.New("script", input)
 	parser := New(lexer)
 	stmts := parser.ParseProgram()
 
@@ -99,7 +99,7 @@ func TestParsePrimary(t *testing.T) {
 
 func TestParseUnary(t *testing.T) {
 	input := "-123"
-	lexer := lexer.New(input)
+	lexer := lexer.New("script", input)
 	parser := New(lexer)
 	exp := parser.parseExpression()
 
@@ -126,7 +126,7 @@ func TestParseUnary(t *testing.T) {
 
 func TestParseFactor(t *testing.T) {
 	input := "2 * -3"
-	lexer := lexer.New(input)
+	lexer := lexer.New("script", input)
 	parser := New(lexer)
 	expr := parser.parseExpression()
 
@@ -173,7 +173,7 @@ func TestParseFactor(t *testing.T) {
 
 func TestParseTerm(t *testing.T) {
 	input := "(4 - 3) * (2 + 1)"
-	lexer := lexer.New(input)
+	lexer := lexer.New("script", input)
 	parser := New(lexer)
 	expr := parser.parseExpression()
 
@@ -246,7 +246,7 @@ func TestParseTerm(t *testing.T) {
 
 func TestParseComparison(t *testing.T) {
 	input := "(a + b) < c"
-	lexer := lexer.New(input)
+	lexer := lexer.New("script", input)
 	parser := New(lexer)
 	expr := parser.parseExpression()
 
@@ -301,7 +301,7 @@ func TestParseComparison(t *testing.T) {
 
 func TestParseEquality(t *testing.T) {
 	input := "true != false"
-	lexer := lexer.New(input)
+	lexer := lexer.New("script", input)
 	parser := New(lexer)
 	expr := parser.parseExpression()
 
@@ -338,7 +338,7 @@ func TestParseEquality(t *testing.T) {
 
 func TestParsePut(t *testing.T) {
 	input := "putn 1;"
-	lexer := lexer.New(input)
+	lexer := lexer.New("script", input)
 	parser := New(lexer)
 	stmt := parser.ParseProgram()
 
@@ -364,7 +364,7 @@ func TestParsePut(t *testing.T) {
 
 func TestParseAssign(t *testing.T) {
 	input := "a = 2"
-	lexer := lexer.New(input)
+	lexer := lexer.New("script", input)
 	parser := New(lexer)
 	expr := parser.parseExpression()
 
@@ -389,7 +389,7 @@ func TestParseAssign(t *testing.T) {
 
 func TestParseVar(t *testing.T) {
 	input := "var a = 1;"
-	lexer := lexer.New(input)
+	lexer := lexer.New("script", input)
 	parser := New(lexer)
 	stmt := parser.ParseProgram()
 
@@ -415,7 +415,7 @@ func TestParseVar(t *testing.T) {
 
 func TestParseBlock(t *testing.T) {
 	input := "{ a; b; }"
-	lexer := lexer.New(input)
+	lexer := lexer.New("script", input)
 	parser := New(lexer)
 	stmts := parser.ParseProgram()
 
@@ -451,7 +451,7 @@ if (true)
 else
     false;
 `
-	lexer := lexer.New(input)
+	lexer := lexer.New("script", input)
 	parser := New(lexer)
 	stmt := parser.ParseProgram()
 
@@ -496,7 +496,7 @@ else
 
 func TestParseWhile(t *testing.T) {
 	input := `while (true) true;`
-	lexer := lexer.New(input)
+	lexer := lexer.New("script", input)
 	parser := New(lexer)
 	stmt := parser.ParseProgram()
 
