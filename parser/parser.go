@@ -52,6 +52,10 @@ func (p *Parser) parseDeclaration() ast.Statement {
 		return p.parseVarDeclaration()
 	}
 
+	if p.currentToken.Type == token.FUNC {
+		return p.parseFunctionDecaration()
+	}
+
 	return p.parseStatement()
 }
 
@@ -79,6 +83,40 @@ func (p *Parser) parseVarDeclaration() ast.Statement {
 	p.nextToken()
 
 	return ast.Var{Identifier: identifier, Expression: expr}
+}
+
+func (p *Parser) parseFunctionDecaration() ast.Statement {
+	p.nextToken()
+
+	if p.currentToken.Type != token.IDENT {
+		p.parseError(p.currentToken, "Expect function name.")
+		return nil
+	}
+	name := p.currentToken
+	p.nextToken()
+
+	if p.currentToken.Type != token.LPAREN {
+		p.parseError(p.currentToken, "Expect '(' after function name.")
+		return nil
+	}
+	p.nextToken()
+
+	// TODO: arguments
+
+	if p.currentToken.Type != token.RPAREN {
+		p.parseError(p.currentToken, "Expect ')' after function name.")
+		return nil
+	}
+	p.nextToken()
+
+	if p.currentToken.Type != token.LBRACE {
+		p.parseError(p.currentToken, "Expect '{' before function body.")
+		return nil
+	}
+
+	body := p.parseBlock().(ast.Block)
+
+	return ast.Function{Name: name, Body: body.Statements}
 }
 
 func (p *Parser) parseStatement() ast.Statement {

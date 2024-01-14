@@ -32,6 +32,7 @@ const (
 	RBRACE = "}"
 
 	VAR   = "VAR"
+	FUNC  = "FUNC"
 	TRUE  = "TRUE"
 	FALSE = "FALSE"
 	IF    = "IF"
@@ -56,6 +57,7 @@ type Token struct {
 
 var keywords = map[string]TokenType{
 	"var":   VAR,
+	"func":  FUNC,
 	"true":  TRUE,
 	"false": FALSE,
 	"if":    IF,

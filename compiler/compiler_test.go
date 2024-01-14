@@ -75,7 +75,7 @@ func TestCompileCall(t *testing.T) {
 
 	instructions := compiler.Compile()
 	expects := []string{
-		"TFLFLLFFLLLLLFFLLFLLFFFFLT",
+		"TFLLLFFLLLLLFFLLFLLFFFFLT",
 	}
 
 	for i, expect := range expects {
@@ -364,6 +364,32 @@ func TestCompileGlobalVariable(t *testing.T) {
 		"FFFLLFFLLLLLFFFFLT",
 		"LLL",
 		"FTT",
+	}
+
+	for i, expect := range expects {
+		if instructions[i] != expect {
+			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, instructions[i])
+		}
+	}
+}
+
+func TestCompileFunction(t *testing.T) {
+	input := "func a() { 1;} a();"
+	lexer := lexer.New("script", input)
+	parser := parser.New(lexer)
+	exprs := parser.ParseProgram()
+	compiler := New(exprs)
+
+	instructions := compiler.Compile()
+	expects := []string{
+		"TFLLLFFLLLLLFFLLFLLFFFFLT",
+		"FTT",
+		"TTT",
+		"TFFLLFFLLLLLFFLLFLLFFFFLT",
+		"FFFLT",
+		"FTT",
+		"FFFFT",
+		"TLT",
 	}
 
 	for i, expect := range expects {

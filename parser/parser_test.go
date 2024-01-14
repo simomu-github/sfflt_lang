@@ -429,6 +429,28 @@ func TestParseVar(t *testing.T) {
 	}
 }
 
+func TestParseFunction(t *testing.T) {
+	input := "func test() { putc 'a'; }"
+	lexer := lexer.New("script", input)
+	parser := New(lexer)
+	stmt := parser.ParseProgram()
+
+	funcStmt, ok := stmt[0].(ast.Function)
+	if !ok {
+		t.Fatalf("Statement is not var")
+	}
+
+	if funcStmt.Name.Literal != "test" {
+		t.Fatalf("Function name is not match")
+	}
+
+	_, ok = funcStmt.Body[0].(ast.PutStatement)
+
+	if !ok {
+		t.Fatalf("Body is not PutStatement")
+	}
+}
+
 func TestParseBlock(t *testing.T) {
 	input := "{ a; b; }"
 	lexer := lexer.New("script", input)

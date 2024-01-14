@@ -8,6 +8,7 @@ type Statement interface {
 
 type StatementVisitor interface {
 	VisitVar(s Var)
+	VisitFunction(f Function)
 	VisitPut(s PutStatement)
 	VisitIf(s If)
 	VisitWhile(s While)
@@ -22,6 +23,17 @@ type Var struct {
 
 func (v Var) Visit(visitor StatementVisitor) {
 	visitor.VisitVar(v)
+}
+
+type Function struct {
+	Name token.Token
+	// TODO: arguments
+	// Params []token.Token
+	Body []Statement
+}
+
+func (f Function) Visit(visitor StatementVisitor) {
+	visitor.VisitFunction(f)
 }
 
 type PutStatement struct {

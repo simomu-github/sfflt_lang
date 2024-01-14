@@ -13,7 +13,7 @@ func TestScanToken(t *testing.T) {
 !=
 <><=>=
 'a'123
-var if else while true false putn putc getn getc hoge_fuga0
+var func if else while true false putn putc getn getc hoge_fuga0
 `
 
 	expects := []struct {
@@ -48,16 +48,17 @@ var if else while true false putn putc getn getc hoge_fuga0
 		{token.INT, "123", 6, 6},
 
 		{token.VAR, "var", 7, 3},
-		{token.IF, "if", 7, 6},
-		{token.ELSE, "else", 7, 11},
-		{token.WHILE, "while", 7, 17},
-		{token.TRUE, "true", 7, 22},
-		{token.FALSE, "false", 7, 28},
-		{token.PUTN, "putn", 7, 33},
-		{token.PUTC, "putc", 7, 38},
-		{token.GETN, "getn", 7, 43},
-		{token.GETC, "getc", 7, 48},
-		{token.IDENT, "hoge_fuga0", 7, 59},
+		{token.FUNC, "func", 7, 8},
+		{token.IF, "if", 7, 11},
+		{token.ELSE, "else", 7, 16},
+		{token.WHILE, "while", 7, 22},
+		{token.TRUE, "true", 7, 27},
+		{token.FALSE, "false", 7, 33},
+		{token.PUTN, "putn", 7, 38},
+		{token.PUTC, "putc", 7, 43},
+		{token.GETN, "getn", 7, 48},
+		{token.GETC, "getc", 7, 53},
+		{token.IDENT, "hoge_fuga0", 7, 64},
 
 		{token.EOF, string(byte(0)), 8, 0},
 	}

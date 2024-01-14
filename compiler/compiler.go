@@ -8,20 +8,32 @@ import (
 )
 
 type Compiler struct {
-	statements   []ast.Statement
-	instructions []string
+	statements          []ast.Statement
+	instructions        []string
+	functions           [][]string
+	isCompilingFunction bool
 }
 
 func New(statements []ast.Statement) *Compiler {
 	return &Compiler{
-		statements:   statements,
-		instructions: []string{},
+		statements:          statements,
+		instructions:        []string{},
+		functions:           [][]string{},
+		isCompilingFunction: false,
 	}
 }
 
 func (c *Compiler) Compile() []string {
 	for _, e := range c.statements {
 		e.Visit(c)
+	}
+
+	c.addInstruction(END)
+
+	for _, function := range c.functions {
+		for _, inst := range function {
+			c.instructions = append(c.instructions, inst)
+		}
 	}
 
 	return c.instructions
@@ -32,6 +44,22 @@ func (c *Compiler) VisitVar(s ast.Var) {
 	c.addInstructionWithParam(PUSH, POSI+ident)
 	s.Expression.Visit(c)
 	c.addInstruction(STORE)
+}
+
+func (c *Compiler) VisitFunction(s ast.Function) {
+	c.isCompilingFunction = true
+
+	c.functions = append(c.functions, []string{})
+	ident := stringToBinary("gf" + s.Name.Literal)
+	c.addInstructionWithParam(LABEL, ident)
+
+	for _, stmt := range s.Body {
+		stmt.Visit(c)
+	}
+	c.addInstructionWithParam(PUSH, ZERO)
+	c.addInstruction(ENDSUB)
+
+	c.isCompilingFunction = false
 }
 
 func (c *Compiler) VisitPut(s ast.PutStatement) {
@@ -214,7 +242,7 @@ func (c *Compiler) VisitUnaryExpression(e ast.Unary) {
 
 func (c *Compiler) VisitCall(e ast.Call) {
 	ident := stringToBinary("gf" + e.Callee.Literal)
-	c.addInstructionWithParam(CALLSUB, POSI+ident)
+	c.addInstructionWithParam(CALLSUB, ident)
 }
 
 func (c *Compiler) VisitIntegerLiteral(e ast.IntegerLiteral) {
@@ -261,11 +289,21 @@ func (c *Compiler) VisitGet(s ast.Get) {
 }
 
 func (c *Compiler) addInstruction(instruction InstructionType) {
-	c.instructions = append(c.instructions, string(instruction))
+	if c.isCompilingFunction {
+		idx := len(c.functions) - 1
+		c.functions[idx] = append(c.functions[idx], string(instruction))
+	} else {
+		c.instructions = append(c.instructions, string(instruction))
+	}
 }
 
 func (c *Compiler) addInstructionWithParam(instruction InstructionType, param string) {
-	c.instructions = append(c.instructions, string(instruction)+param+"T")
+	if c.isCompilingFunction {
+		idx := len(c.functions) - 1
+		c.functions[idx] = append(c.functions[idx], string(instruction)+param+"T")
+	} else {
+		c.instructions = append(c.instructions, string(instruction)+param+"T")
+	}
 }
 
 func (c *Compiler) reserveJumpLabel(instruction InstructionType) int {
