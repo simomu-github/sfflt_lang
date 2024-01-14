@@ -274,6 +274,23 @@ func (p *Parser) parseUnary() ast.Expression {
 		return ast.Unary{Operator: operator, Right: p.parsePrimary()}
 	}
 
+	return p.parseCall()
+}
+
+func (p *Parser) parseCall() ast.Expression {
+	if p.currentToken.Type == token.IDENT &&
+		p.peekToken.Type == token.LPAREN {
+		callee := p.currentToken
+		p.nextToken()
+		p.nextToken()
+		// TODO: parse arguments
+		if p.currentToken.Type != token.RPAREN {
+			p.parseError(p.currentToken, "Expect ')' after arguments.")
+			return nil
+		}
+		return ast.Call{Callee: callee}
+	}
+
 	return p.parsePrimary()
 }
 

@@ -212,6 +212,11 @@ func (c *Compiler) VisitUnaryExpression(e ast.Unary) {
 	e.Right.Visit(c)
 }
 
+func (c *Compiler) VisitCall(e ast.Call) {
+	ident := stringToBinary("gf" + e.Callee.Literal)
+	c.addInstructionWithParam(CALLSUB, POSI+ident)
+}
+
 func (c *Compiler) VisitIntegerLiteral(e ast.IntegerLiteral) {
 	value := intToBinary(e.Value)
 	var sign string

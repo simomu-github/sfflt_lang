@@ -97,6 +97,22 @@ func TestParsePrimary(t *testing.T) {
 	}
 }
 
+func TestCall(t *testing.T) {
+	input := "test()"
+	lexer := lexer.New("script", input)
+	parser := New(lexer)
+	exp := parser.parseExpression()
+
+	call, ok := exp.(ast.Call)
+	if !ok {
+		t.Fatalf("Not Call")
+	}
+
+	if call.Callee.Literal != "test" {
+		t.Fatalf("Callee is not match")
+	}
+}
+
 func TestParseUnary(t *testing.T) {
 	input := "-123"
 	lexer := lexer.New("script", input)

@@ -76,6 +76,7 @@ type ExpressionVisitor interface {
 	VisitAssign(a Assign)
 	VisitBinaryExpression(b Binary)
 	VisitUnaryExpression(e Unary)
+	VisitCall(e Call)
 	VisitIntegerLiteral(e IntegerLiteral)
 	VisitCharLiteral(e CharLiteral)
 	VisitBooleanLiteral(e BooleanLiteral)
@@ -109,6 +110,16 @@ type Unary struct {
 
 func (u Unary) Visit(visitor ExpressionVisitor) {
 	visitor.VisitUnaryExpression(u)
+}
+
+type Call struct {
+	Callee token.Token
+	// TODO: arguments
+	// Arguments []Expression
+}
+
+func (c Call) Visit(visitor ExpressionVisitor) {
+	visitor.VisitCall(c)
 }
 
 type IntegerLiteral struct {
