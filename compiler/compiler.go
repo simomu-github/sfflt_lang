@@ -29,28 +29,28 @@ func (c *Compiler) Compile() []string {
 
 func (c *Compiler) VisitVar(s ast.Var) {
 	ident := stringToBinary("g" + s.Identifier.Literal)
-	c.instructions = append(c.instructions, "FFF"+ident+"T")
+	c.addInstructionWithParam(PUSH, POSI+ident)
 	s.Expression.Visit(c)
-	c.instructions = append(c.instructions, "LLF")
+	c.addInstruction(STORE)
 }
 
 func (c *Compiler) VisitPut(s ast.PutStatement) {
 	s.Expression.Visit(c)
 
 	if s.Token.Type == token.PUTN {
-		c.instructions = append(c.instructions, "LTFL")
+		c.addInstruction(PUTN)
 	} else {
-		c.instructions = append(c.instructions, "LTFF")
+		c.addInstruction(PUTC)
 	}
 }
 
 func (c *Compiler) VisitIf(s ast.If) {
 	s.Condition.Visit(c)
 
-	trueJumpOffset := c.reserveJumpLabel("TLF")
+	trueJumpOffset := c.reserveJumpLabel(JUMP_WHEN_ZERO)
 
 	s.Then.Visit(c)
-	endJumpOffset := c.reserveJumpLabel("TFT")
+	endJumpOffset := c.reserveJumpLabel(JUMP)
 
 	trueLabel := c.markJumpLabel()
 	c.confirmJumpLabel(trueJumpOffset, trueLabel)
@@ -65,11 +65,11 @@ func (c *Compiler) VisitIf(s ast.If) {
 func (c *Compiler) VisitWhile(s ast.While) {
 	trueJumpLabel := c.markJumpLabel()
 	s.Condition.Visit(c)
-	endJumpOffset := c.reserveJumpLabel("TLF")
+	endJumpOffset := c.reserveJumpLabel(JUMP_WHEN_ZERO)
 
 	s.Body.Visit(c)
 
-	trueJumpOffset := c.reserveJumpLabel("TFT")
+	trueJumpOffset := c.reserveJumpLabel(JUMP)
 	c.confirmJumpLabel(trueJumpOffset, trueJumpLabel)
 
 	endLabel := c.markJumpLabel()
@@ -84,36 +84,36 @@ func (c *Compiler) VisitBlock(s ast.Block) {
 
 func (c *Compiler) VisitExpression(s ast.ExpressionStatement) {
 	s.Expression.Visit(c)
-	c.instructions = append(c.instructions, "FTT")
+	c.addInstruction(DISCARD)
 }
 
 func (c *Compiler) VisitAssign(s ast.Assign) {
 	ident := stringToBinary("g" + s.Target.Literal)
-	c.instructions = append(c.instructions, "FFF"+ident+"T")
-	c.instructions = append(c.instructions, "LLL")
+	c.addInstructionWithParam(PUSH, POSI+ident)
+	c.addInstruction(RETRIEVE)
 
-	c.instructions = append(c.instructions, "FTT")
+	c.addInstruction(DISCARD)
 
-	c.instructions = append(c.instructions, "FFF"+ident+"T")
+	c.addInstructionWithParam(PUSH, POSI+ident)
 	s.Expression.Visit(c)
-	c.instructions = append(c.instructions, "LLF")
+	c.addInstruction(STORE)
 }
 
 func (c *Compiler) VisitBinaryExpression(e ast.Binary) {
 	e.Left.Visit(c)
 	e.Right.Visit(c)
-	var instruction string
+	var instruction InstructionType
 	switch e.Operator.Type {
 	case token.PLUS:
-		instruction = "LFFF"
+		instruction = ADD
 	case token.MINUS:
-		instruction = "LFFL"
+		instruction = SUB
 	case token.ASTERISK:
-		instruction = "LFFT"
+		instruction = MUL
 	case token.SLASH:
-		instruction = "LFLF"
+		instruction = SUB
 	case token.MOD:
-		instruction = "LFLL"
+		instruction = MOD
 	case token.LT, token.LTEQ, token.GT, token.GTEQ:
 		c.comparison(e)
 		return
@@ -122,28 +122,28 @@ func (c *Compiler) VisitBinaryExpression(e ast.Binary) {
 		return
 	}
 
-	c.instructions = append(c.instructions, instruction)
+	c.addInstruction(instruction)
 }
 
 func (c *Compiler) equality(e ast.Binary) {
-	c.instructions = append(c.instructions, "LFFL")
+	c.addInstruction(SUB)
 
-	zeroJumpOffset := c.reserveJumpLabel("TLF")
+	zeroJumpOffset := c.reserveJumpLabel(JUMP_WHEN_ZERO)
 
 	if e.Operator.Type == token.EQ {
-		c.instructions = append(c.instructions, "FFFFT")
+		c.addInstructionWithParam(PUSH, ZERO)
 	} else {
-		c.instructions = append(c.instructions, "FFFLT")
+		c.addInstructionWithParam(PUSH, ONE)
 	}
-	endJumpOffset := c.reserveJumpLabel("TFT")
+	endJumpOffset := c.reserveJumpLabel(JUMP)
 
 	zeroLabel := c.markJumpLabel()
 	c.confirmJumpLabel(zeroJumpOffset, zeroLabel)
 
 	if e.Operator.Type == token.EQ {
-		c.instructions = append(c.instructions, "FFFLT")
+		c.addInstructionWithParam(PUSH, ONE)
 	} else {
-		c.instructions = append(c.instructions, "FFFFT")
+		c.addInstructionWithParam(PUSH, ZERO)
 	}
 
 	endLabel := c.markJumpLabel()
@@ -152,33 +152,33 @@ func (c *Compiler) equality(e ast.Binary) {
 
 func (c *Compiler) comparison(e ast.Binary) {
 	if e.Operator.Type == token.GT || e.Operator.Type == token.GTEQ {
-		c.instructions = append(c.instructions, "FTL")
+		c.addInstruction(SWAP)
 	}
-	c.instructions = append(c.instructions, "LFFL")
+	c.addInstruction(SUB)
 
 	if e.Operator.Type == token.LTEQ || e.Operator.Type == token.GTEQ {
-		c.instructions = append(c.instructions, "FTF")
+		c.addInstruction(DUP)
 	}
 
 	zeroJumpOffset := -1
 	if e.Operator.Type == token.LTEQ || e.Operator.Type == token.GTEQ {
-		zeroJumpOffset = c.reserveJumpLabel("TLF")
+		zeroJumpOffset = c.reserveJumpLabel(JUMP_WHEN_ZERO)
 	}
 
-	negativeJumpOffset := c.reserveJumpLabel("TLL")
+	negativeJumpOffset := c.reserveJumpLabel(JUMP_WHEN_NEGA)
 
-	c.instructions = append(c.instructions, "FFFFT")
-	endJumpOffset := c.reserveJumpLabel("TFT")
+	c.addInstructionWithParam(PUSH, ZERO)
+	endJumpOffset := c.reserveJumpLabel(JUMP)
 
 	if zeroJumpOffset >= 0 {
 		zeroLabel := c.markJumpLabel()
 		c.confirmJumpLabel(zeroJumpOffset, zeroLabel)
-		c.instructions = append(c.instructions, "FTT")
+		c.addInstruction(DISCARD)
 	}
 
 	trueLabel := c.markJumpLabel()
 	c.confirmJumpLabel(negativeJumpOffset, trueLabel)
-	c.instructions = append(c.instructions, "FFFLT")
+	c.addInstructionWithParam(PUSH, ONE)
 
 	endLabel := c.markJumpLabel()
 	c.confirmJumpLabel(endJumpOffset, endLabel)
@@ -186,23 +186,23 @@ func (c *Compiler) comparison(e ast.Binary) {
 
 func (c *Compiler) VisitUnaryExpression(e ast.Unary) {
 	if e.Operator.Type == token.MINUS {
-		c.instructions = append(c.instructions, "FFLLT")
+		c.addInstructionWithParam(PUSH, MINUS_ONE)
 		e.Right.Visit(c)
-		c.instructions = append(c.instructions, "LFFT")
+		c.addInstruction(MUL)
 		return
 	}
 
 	if e.Operator.Type == token.BANG {
 		e.Right.Visit(c)
-		zeroJumpOffset := c.reserveJumpLabel("TLF")
+		zeroJumpOffset := c.reserveJumpLabel(JUMP_WHEN_ZERO)
 
-		c.instructions = append(c.instructions, "FFFFT")
-		endJumpOffset := c.reserveJumpLabel("TFT")
+		c.addInstructionWithParam(PUSH, ZERO)
+		endJumpOffset := c.reserveJumpLabel(JUMP)
 
 		zeroLabel := c.markJumpLabel()
 		c.confirmJumpLabel(zeroJumpOffset, zeroLabel)
 
-		c.instructions = append(c.instructions, "FFFLT")
+		c.addInstructionWithParam(PUSH, ONE)
 
 		endLabel := c.markJumpLabel()
 		c.confirmJumpLabel(endJumpOffset, endLabel)
@@ -216,60 +216,62 @@ func (c *Compiler) VisitIntegerLiteral(e ast.IntegerLiteral) {
 	value := intToBinary(e.Value)
 	var sign string
 	if e.Value >= 0 {
-		sign = "F"
+		sign = POSI
 	} else {
-		sign = "L"
+		sign = NEGA
 	}
-	instruction := "FF" + sign + value + "T"
-	c.instructions = append(c.instructions, instruction)
+	c.addInstructionWithParam(PUSH, sign+value)
 }
 
 func (c *Compiler) VisitCharLiteral(e ast.CharLiteral) {
 	value := intToBinary(int64([]rune(e.Value)[0]))
-	instruction := "FFF" + value + "T"
-	c.instructions = append(c.instructions, instruction)
+	c.addInstructionWithParam(PUSH, POSI+value)
 }
 
 func (c *Compiler) VisitBooleanLiteral(e ast.BooleanLiteral) {
-	var value string
 	if e.Value {
-		value = "FLT"
+		c.addInstructionWithParam(PUSH, ONE)
 	} else {
-		value = "FFT"
+		c.addInstructionWithParam(PUSH, ZERO)
 	}
-
-	instruction := "FF" + value
-	c.instructions = append(c.instructions, instruction)
 }
 
 func (c *Compiler) VisitVariable(e ast.Variable) {
 	ident := stringToBinary("g" + e.Identifier.Literal)
-	c.instructions = append(c.instructions, "FFF"+ident+"T")
-	c.instructions = append(c.instructions, "LLL")
+	c.addInstructionWithParam(PUSH, POSI+ident)
+	c.addInstruction(RETRIEVE)
 }
 
 func (c *Compiler) VisitGet(s ast.Get) {
 	tmp := stringToBinary("t" + "tmp")
-	c.instructions = append(c.instructions, "FFF"+tmp+"T")
+	c.addInstructionWithParam(PUSH, POSI+tmp)
 	if s.Token.Type == token.GETN {
-		c.instructions = append(c.instructions, "LTLL")
+		c.addInstruction(GETN)
 	} else {
-		c.instructions = append(c.instructions, "LTLF")
+		c.addInstruction(GETC)
 	}
 
-	c.instructions = append(c.instructions, "FFF"+tmp+"T")
-	c.instructions = append(c.instructions, "LLL")
+	c.addInstructionWithParam(PUSH, POSI+tmp)
+	c.addInstruction(RETRIEVE)
 }
 
-func (c *Compiler) reserveJumpLabel(instruction string) int {
-	c.instructions = append(c.instructions, instruction+"?T")
+func (c *Compiler) addInstruction(instruction InstructionType) {
+	c.instructions = append(c.instructions, string(instruction))
+}
+
+func (c *Compiler) addInstructionWithParam(instruction InstructionType, param string) {
+	c.instructions = append(c.instructions, string(instruction)+param+"T")
+}
+
+func (c *Compiler) reserveJumpLabel(instruction InstructionType) int {
+	c.addInstructionWithParam(instruction, "?")
 	return len(c.instructions) - 1
 }
 
 func (c *Compiler) markJumpLabel() string {
 	labelPrefix := stringToBinary("cl")
 	label := intToBinary(int64(len(c.instructions)))
-	c.instructions = append(c.instructions, "TFF"+labelPrefix+label+"T")
+	c.addInstructionWithParam(LABEL, labelPrefix+label)
 
 	return labelPrefix + label
 }
