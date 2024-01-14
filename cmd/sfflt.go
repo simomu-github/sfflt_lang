@@ -5,22 +5,24 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
+	"strconv"
 
 	"github.com/simomu-github/sfflt_lang/compiler"
+	"github.com/simomu-github/sfflt_lang/formatter"
 	"github.com/simomu-github/sfflt_lang/lexer"
 	"github.com/simomu-github/sfflt_lang/parser"
 )
 
 var (
 	versionOpt = flag.Bool("v", false, "display version information")
+	formatOpt  = flag.String("format", "64", "output code format. [online, pretty, (number of column)]")
 )
 
 const version = "v0.0.1"
 
 func main() {
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: sfflt [FILE]\n")
+		fmt.Fprintf(os.Stderr, "Usage: sfflt (option) [FILE]\n")
 		flag.PrintDefaults()
 	}
 
@@ -30,8 +32,8 @@ func main() {
 		os.Exit(0)
 	}
 
-	if len(os.Args) >= 2 {
-		os.Exit(Compile(os.Args[1]))
+	if len(flag.Args()) == 1 {
+		os.Exit(Compile(flag.Args()[0]))
 	} else {
 		flag.Usage()
 		os.Exit(1)
@@ -58,7 +60,25 @@ func Compile(path string) int {
 	compiler := compiler.New(statements)
 	instructions := compiler.Compile()
 	outputFilename := getFilenameWithoutExt(path) + ".fflt"
-	os.WriteFile(outputFilename, []byte(strings.Join(instructions, "\n")), 0644)
+	var output string
+	switch *formatOpt {
+	case "online":
+		output = formatter.FormatOneLine(instructions)
+	case "pretty":
+		output = formatter.FormatRaw(instructions)
+	default:
+		column, err := strconv.Atoi(*formatOpt)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Invalid format option. [online, pretty, (number of column)]\n")
+			return 1
+		}
+		if column <= 0 {
+			fmt.Fprintf(os.Stderr, "Invalid format option. [online, pretty, (number of column)]\n")
+			return 1
+		}
+		output = formatter.FormatSquere(instructions, column)
+	}
+	os.WriteFile(outputFilename, []byte(output), 0644)
 
 	return 0
 }
