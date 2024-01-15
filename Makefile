@@ -4,7 +4,7 @@ sfflt: deps
 	go build -o release/sfflt cmd/sfflt.go
 
 run_test_script: sfflt
-	./release/sfflt test.sflt
+	./release/sfflt -format pretty test.sflt
 	$(FFLT_LANG) test.fflt
 
 deps:
