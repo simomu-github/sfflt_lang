@@ -42,7 +42,7 @@ func (c *Compiler) Compile() []string {
 }
 
 func (c *Compiler) VisitVar(s ast.Var) {
-	ident := stringToBinary("g" + s.Identifier.Literal)
+	ident := stringToBinary("gv" + s.Identifier.Literal)
 	c.addInstructionWithParam(PUSH, POSI+ident)
 	s.Expression.Visit(c)
 	c.addInstruction(STORE)
@@ -123,7 +123,7 @@ func (c *Compiler) VisitExpression(s ast.ExpressionStatement) {
 }
 
 func (c *Compiler) VisitAssign(s ast.Assign) {
-	ident := stringToBinary("g" + s.Target.Literal)
+	ident := stringToBinary("gv" + s.Target.Literal)
 	c.addInstructionWithParam(PUSH, POSI+ident)
 	c.addInstruction(RETRIEVE)
 
@@ -277,7 +277,7 @@ func (c *Compiler) VisitBooleanLiteral(e ast.BooleanLiteral) {
 }
 
 func (c *Compiler) VisitVariable(e ast.Variable) {
-	ident := stringToBinary("g" + e.Identifier.Literal)
+	ident := stringToBinary("gv" + e.Identifier.Literal)
 	c.addInstructionWithParam(PUSH, POSI+ident)
 	c.addInstruction(RETRIEVE)
 }

@@ -254,13 +254,13 @@ func TestCompileAssign(t *testing.T) {
 
 	instructions := compiler.Compile()
 	expects := []string{
-		"FFFLLFFLLLLLFFFFLT",
+		"FFFLLFFLLLLLLFLLFLLFFFFLT",
 		"FFFLT",
 		"LLF",
-		"FFFLLFFLLLLLFFFFLT",
+		"FFFLLFFLLLLLLFLLFLLFFFFLT",
 		"LLL",
 		"FTT",
-		"FFFLLFFLLLLLFFFFLT",
+		"FFFLLFFLLLLLLFLLFLLFFFFLT",
 		"FFFLFT",
 		"LLF",
 		"FTT",
@@ -358,10 +358,10 @@ func TestCompileGlobalVariable(t *testing.T) {
 
 	instructions := compiler.Compile()
 	expects := []string{
-		"FFFLLFFLLLLLFFFFLT",
+		"FFFLLFFLLLLLLFLLFLLFFFFLT",
 		"FFFLT",
 		"LLF",
-		"FFFLLFFLLLLLFFFFLT",
+		"FFFLLFFLLLLLLFLLFLLFFFFLT",
 		"LLL",
 		"FTT",
 	}
