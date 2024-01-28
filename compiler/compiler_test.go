@@ -49,14 +49,14 @@ func TestCompileBang(t *testing.T) {
 
 	instructions := compiler.Compile()
 	expects := []string{
-		"FFFLT",
-		"TLFLLFFFLLLLFLLFFLFFT",
-		"FFFFT",
-		"TFTLLFFFLLLLFLLFFLLFT",
-		"TFFLLFFFLLLLFLLFFLFFT",
-		"FFFLT",
-		"TFFLLFFFLLLLFLLFFLLFT",
-		"FTT",
+		"FFFLT",        // push 1
+		"TLFLLFLLFFFT", // jump label when zero
+		"FFFFT",        // push 0
+		"TFTLLFLLFFLT", // jump
+		"TFFLLFLLFFFT", // mark label
+		"FFFLT",        // push 1
+		"TFFLLFLLFFLT", // mark label
+		"FTT",          // discard
 	}
 
 	for i, expect := range expects {
@@ -166,16 +166,16 @@ func TestCompileComparison(t *testing.T) {
 
 	instructions := compiler.Compile()
 	expects := []string{
-		"FFFLT",
-		"FFFLFT",
-		"FTL",
-		"LFFL",
-		"TLLLLFFFLLLLFLLFFLLLT",
-		"FFFFT",
-		"TFTLLFFFLLLLFLLFFLFFLT",
-		"TFFLLFFFLLLLFLLFFLLLT",
-		"FFFLT",
-		"TFFLLFFFLLLLFLLFFLFFLT",
+		"FFFLT",        // push 1
+		"FFFLFT",       // push 2
+		"FTL",          // swap
+		"LFFL",         // sub
+		"TLLLLFLLFFFT", // jump label when negative
+		"FFFFT",        // push 0
+		"TFTLLFLLFFLT", // jump label
+		"TFFLLFLLFFFT", // mark label
+		"FFFLT",        // push 1
+		"TFFLLFLLFFLT", // mark label
 	}
 
 	for i, expect := range expects {
@@ -194,20 +194,20 @@ func TestCompileComparisonWithEqual(t *testing.T) {
 
 	instructions := compiler.Compile()
 	expects := []string{
-		"FFFLT",                  // push lhs
-		"FFFLFT",                 // push rhs
-		"FTL",                    // swap
-		"LFFL",                   // sub
-		"FTF",                    // dup
-		"TLFLLFFFLLLLFLLFFLFFLT", // jump label when zero
-		"TLLLLFFFLLLLFLLFFLFLLT", // jump label when negative
-		"FFFFT",                  // push 0
-		"TFTLLFFFLLLLFLLFFLLFLT", // jump label to end
-		"TFFLLFFFLLLLFLLFFLFFLT", // mark label zero
-		"FTT",                    // discard
-		"TFFLLFFFLLLLFLLFFLFLLT", // mark label negative
-		"FFFLT",                  // push 1
-		"TFFLLFFFLLLLFLLFFLLFLT", // mark label end
+		"FFFLT",         // push lhs
+		"FFFLFT",        // push rhs
+		"FTL",           // swap
+		"LFFL",          // sub
+		"FTF",           // dup
+		"TLFLLFLLFFFT",  // jump label when zero
+		"TLLLLFLLFFLT",  // jump label when negative
+		"FFFFT",         // push 0
+		"TFTLLFLLFFLFT", // jump label to end
+		"TFFLLFLLFFFT",  // mark label zero
+		"FTT",           // discard
+		"TFFLLFLLFFLT",  // mark label negative
+		"FFFLT",         // push 1
+		"TFFLLFLLFFLFT", // mark label end
 	}
 
 	for i, expect := range expects {
@@ -226,16 +226,16 @@ func TestCompileEquality(t *testing.T) {
 
 	instructions := compiler.Compile()
 	expects := []string{
-		"FFFLT",                  // push lhs
-		"FFFLFT",                 // push rhs
-		"LFFL",                   // sub
-		"TLFLLFFFLLLLFLLFFLLFT",  // jump label when zero
-		"FFFLT",                  // push 1
-		"TFTLLFFFLLLLFLLFFLFFFT", // jump label to end
-		"TFFLLFFFLLLLFLLFFLLFT",  // mark label when zero
-		"FFFFT",                  // push 0
-		"TFFLLFFFLLLLFLLFFLFFFT", // mark label end
-		"FTT",
+		"FFFLT",        // push lhs
+		"FFFLFT",       // push rhs
+		"LFFL",         // sub
+		"TLFLLFLLFFFT", // jump label when zero
+		"FFFLT",        // push 1
+		"TFTLLFLLFFLT", // jump label to end
+		"TFFLLFLLFFFT", // mark label when zero
+		"FFFFT",        // push 0
+		"TFFLLFLLFFLT", // mark label end
+		"FTT",          // discard
 	}
 
 	for i, expect := range expects {
@@ -306,15 +306,15 @@ func TestCompileIf(t *testing.T) {
 
 	instructions := compiler.Compile()
 	expects := []string{
-		"FFFLT",                  // condition
-		"TLFLLFFFLLLLFLLFFLFLT",  // jump label when zero
-		"FFFLT",                  // then statement
-		"FTT",                    // then statement
-		"TFTLLFFFLLLLFLLFFLFFFT", // jump label to end
-		"TFFLLFFFLLLLFLLFFLFLT",  // mark label zero
-		"FFFLFT",                 // else statement
-		"FTT",                    // else statement
-		"TFFLLFFFLLLLFLLFFLFFFT", //mark label end
+		"FFFLT",        // condition
+		"TLFLLFLLFFFT", // jump label when zero
+		"FFFLT",        // then statement
+		"FTT",          // then statement
+		"TFTLLFLLFFLT", // jump label to end
+		"TFFLLFLLFFFT", // mark label zero
+		"FFFLFT",       // else statement
+		"FTT",          // else statement
+		"TFFLLFLLFFLT", //mark label end
 	}
 
 	for i, expect := range expects {
@@ -333,13 +333,13 @@ func TestCompileWhile(t *testing.T) {
 
 	instructions := compiler.Compile()
 	expects := []string{
-		"TFFLLFFFLLLLFLLFFFT",   // mark label loop
-		"FFFLT",                 // condition
-		"TLFLLFFFLLLLFLLFFLLFT", // jump label when zero
-		"FFFLT",                 // body statement
-		"FTT",                   // body statement
-		"TFTLLFFFLLLLFLLFFFT",   // jump label to loop
-		"TFFLLFFFLLLLFLLFFLLFT", // mark label zero
+		"TFFLLFLLFFFT", // mark label loop
+		"FFFLT",        // condition
+		"TLFLLFLLFFLT", // jump label when zero
+		"FFFLT",        // body statement
+		"FTT",          // body statement
+		"TFTLLFLLFFFT", // jump label to loop
+		"TFFLLFLLFFLT", // mark label zero
 	}
 
 	for i, expect := range expects {

@@ -11,6 +11,7 @@ type Compiler struct {
 	statements          []ast.Statement
 	instructions        []string
 	functions           [][]string
+	labelIndex          int
 	isCompilingFunction bool
 }
 
@@ -19,6 +20,7 @@ func New(statements []ast.Statement) *Compiler {
 		statements:          statements,
 		instructions:        []string{},
 		functions:           [][]string{},
+		labelIndex:          0,
 		isCompilingFunction: false,
 	}
 }
@@ -313,19 +315,30 @@ func (c *Compiler) addInstructionWithParam(instruction InstructionType, param st
 
 func (c *Compiler) reserveJumpLabel(instruction InstructionType) int {
 	c.addInstructionWithParam(instruction, "?")
-	return len(c.instructions) - 1
+	return len(c.currentInstructions()) - 1
 }
 
 func (c *Compiler) markJumpLabel() string {
-	labelPrefix := stringToBinary("cl")
-	label := intToBinary(int64(len(c.instructions)))
+	labelPrefix := stringToBinary("l")
+	label := intToBinary(int64(c.labelIndex))
+	c.labelIndex++
+
 	c.addInstructionWithParam(LABEL, labelPrefix+label)
 
 	return labelPrefix + label
 }
 
 func (c *Compiler) confirmJumpLabel(offset int, label string) {
-	c.instructions[offset] = strings.Replace(c.instructions[offset], "?", label, 1)
+	c.currentInstructions()[offset] = strings.Replace(c.currentInstructions()[offset], "?", label, 1)
+}
+
+func (c *Compiler) currentInstructions() []string {
+	if !c.isCompilingFunction {
+		return c.instructions
+	}
+
+	idx := len(c.functions) - 1
+	return c.functions[idx]
 }
 
 func stringToBinary(ident string) string {
