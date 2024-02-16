@@ -106,7 +106,7 @@ func (p *Parser) parseFunctionDecaration() ast.Statement {
 	// TODO: arguments
 
 	if p.currentToken.Type != token.RPAREN {
-		p.parseError(p.currentToken, "Expect ')' after function name.")
+		p.parseError(p.currentToken, "Expect ')' after parameters.")
 		return nil
 	}
 	p.nextToken()
@@ -409,7 +409,7 @@ func (p *Parser) parseError(tok token.Token, message string) {
 }
 
 func (p *Parser) skipStatement() {
-	for p.currentToken.Type == token.EOF {
+	for p.currentToken.Type != token.EOF {
 		if p.currentToken.Type == token.SEMICOLON {
 			return
 		}
