@@ -28,10 +28,9 @@ func (v Var) Visit(visitor StatementVisitor) {
 }
 
 type Function struct {
-	Name token.Token
-	// TODO: arguments
-	// Params []token.Token
-	Body []Statement
+	Name   token.Token
+	Params []token.Token
+	Body   []Statement
 }
 
 func (f Function) Visit(visitor StatementVisitor) {
@@ -143,9 +142,8 @@ func (u Unary) Visit(visitor ExpressionVisitor) {
 }
 
 type Call struct {
-	Callee token.Token
-	// TODO: arguments
-	// Arguments []Expression
+	Callee    token.Token
+	Arguments []Expression
 }
 
 func (c Call) Visit(visitor ExpressionVisitor) {

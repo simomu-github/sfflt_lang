@@ -98,7 +98,7 @@ func TestParsePrimary(t *testing.T) {
 }
 
 func TestCall(t *testing.T) {
-	input := "test()"
+	input := "test(1, 2)"
 	lexer := lexer.New("script", input)
 	parser := New(lexer)
 	exp := parser.parseExpression()
@@ -110,6 +110,28 @@ func TestCall(t *testing.T) {
 
 	if call.Callee.Literal != "test" {
 		t.Fatalf("Callee is not match")
+	}
+
+	if len(call.Arguments) != 2 {
+		t.Fatalf("Arguments count is not match")
+	}
+
+	first, ok := call.Arguments[0].(ast.IntegerLiteral)
+	if !ok {
+		t.Fatalf("First arguments is not integer literal")
+	}
+
+	if first.Value != 1 {
+		t.Fatalf("First arguments is not match")
+	}
+
+	second, ok := call.Arguments[1].(ast.IntegerLiteral)
+	if !ok {
+		t.Fatalf("Second arguments is not integer literal")
+	}
+
+	if second.Value != 2 {
+		t.Fatalf("Second arguments is not match")
 	}
 }
 
@@ -539,18 +561,30 @@ func TestParseVar(t *testing.T) {
 }
 
 func TestParseFunction(t *testing.T) {
-	input := "func test() { putc 'a'; }"
+	input := "func test(a, b) { putc 'a'; }"
 	lexer := lexer.New("script", input)
 	parser := New(lexer)
 	stmt := parser.ParseProgram()
 
 	funcStmt, ok := stmt[0].(ast.Function)
 	if !ok {
-		t.Fatalf("Statement is not var")
+		t.Fatalf("Statement is not function")
 	}
 
 	if funcStmt.Name.Literal != "test" {
 		t.Fatalf("Function name is not match")
+	}
+
+	if len(funcStmt.Params) != 2 {
+		t.Fatalf("Params count is not match")
+	}
+
+	if funcStmt.Params[0].Literal != "a" {
+		t.Fatalf("First params literal is not match")
+	}
+
+	if funcStmt.Params[1].Literal != "b" {
+		t.Fatalf("Second params literal is not match")
 	}
 
 	_, ok = funcStmt.Body[0].(ast.PutStatement)

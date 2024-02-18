@@ -104,7 +104,24 @@ func (p *Parser) parseFunctionDecaration() ast.Statement {
 	}
 	p.nextToken()
 
-	// TODO: arguments
+	params := []token.Token{}
+	if p.currentToken.Type != token.RPAREN {
+		for {
+			if p.currentToken.Type != token.IDENT {
+				p.parseError(p.currentToken, "Expect argument name.")
+				return nil
+			}
+
+			params = append(params, p.currentToken)
+
+			p.nextToken()
+			if p.currentToken.Type == token.COMMA {
+				p.nextToken()
+			} else {
+				break
+			}
+		}
+	}
 
 	if p.currentToken.Type != token.RPAREN {
 		p.parseError(p.currentToken, "Expect ')' after parameters.")
@@ -121,7 +138,7 @@ func (p *Parser) parseFunctionDecaration() ast.Statement {
 
 	p.isFunction = false
 
-	return ast.Function{Name: name, Body: body.Statements}
+	return ast.Function{Name: name, Params: params, Body: body.Statements}
 }
 
 func (p *Parser) parseStatement() ast.Statement {
@@ -398,12 +415,26 @@ func (p *Parser) parseCall() ast.Expression {
 		callee := p.currentToken
 		p.nextToken()
 		p.nextToken()
-		// TODO: parse arguments
+
+		arguments := []ast.Expression{}
+		if p.currentToken.Type != token.RPAREN {
+			for {
+				arguments = append(arguments, p.parseExpression())
+
+				p.nextToken()
+				if p.currentToken.Type == token.COMMA {
+					p.nextToken()
+				} else {
+					break
+				}
+			}
+		}
+
 		if p.currentToken.Type != token.RPAREN {
 			p.parseError(p.currentToken, "Expect ')' after arguments.")
 			return nil
 		}
-		return ast.Call{Callee: callee}
+		return ast.Call{Callee: callee, Arguments: arguments}
 	}
 
 	return p.parsePrimary()
