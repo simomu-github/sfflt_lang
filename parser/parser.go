@@ -331,13 +331,12 @@ func (p *Parser) parseComparison() ast.Expression {
 
 func (p *Parser) parseTerm() ast.Expression {
 	expr := p.parseFactor()
-	switch p.peekToken.Type {
-	case token.PLUS, token.MINUS:
+	for p.matchPeekToken(token.PLUS, token.MINUS) {
 		p.nextToken()
 		operator := p.currentToken
 		p.nextToken()
 		right := p.parseFactor()
-		return ast.Binary{Left: expr, Operator: operator, Right: right}
+		expr = ast.Binary{Left: expr, Operator: operator, Right: right}
 	}
 
 	return expr
@@ -345,13 +344,12 @@ func (p *Parser) parseTerm() ast.Expression {
 
 func (p *Parser) parseFactor() ast.Expression {
 	expr := p.parseUnary()
-	switch p.peekToken.Type {
-	case token.ASTERISK, token.SLASH, token.MOD:
+	for p.matchPeekToken(token.ASTERISK, token.SLASH, token.MOD) {
 		p.nextToken()
 		operator := p.currentToken
 		p.nextToken()
 		right := p.parseUnary()
-		return ast.Binary{Left: expr, Operator: operator, Right: right}
+		expr = ast.Binary{Left: expr, Operator: operator, Right: right}
 	}
 
 	return expr
@@ -420,6 +418,17 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 func (p *Parser) nextToken() {
 	p.currentToken = p.peekToken
 	p.peekToken = p.lexer.ScanToken()
+}
+
+func (p *Parser) matchPeekToken(types ...token.TokenType) bool {
+	for _, typ := range types {
+		if p.peekToken.Type == typ {
+			return true
+		}
+	}
+
+	return false
+
 }
 
 func (p *Parser) beginLoop() {
