@@ -13,7 +13,8 @@ func TestScanToken(t *testing.T) {
 !=
 <><=>=
 'a'123
-var func if else while true false return putn putc getn getc hoge_fuga0
+var func if else while true false return break
+putn putc getn getc hoge_fuga0
 `
 
 	expects := []struct {
@@ -55,13 +56,15 @@ var func if else while true false return putn putc getn getc hoge_fuga0
 		{token.TRUE, "true", 7, 27},
 		{token.FALSE, "false", 7, 33},
 		{token.RETURN, "return", 7, 40},
-		{token.PUTN, "putn", 7, 45},
-		{token.PUTC, "putc", 7, 50},
-		{token.GETN, "getn", 7, 55},
-		{token.GETC, "getc", 7, 60},
-		{token.IDENT, "hoge_fuga0", 7, 71},
+		{token.BREAK, "break", 7, 46},
 
-		{token.EOF, string(byte(0)), 8, 0},
+		{token.PUTN, "putn", 8, 4},
+		{token.PUTC, "putc", 8, 9},
+		{token.GETN, "getn", 8, 14},
+		{token.GETC, "getc", 8, 19},
+		{token.IDENT, "hoge_fuga0", 8, 30},
+
+		{token.EOF, string(byte(0)), 9, 0},
 	}
 
 	lexer := New("script", input)

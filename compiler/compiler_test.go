@@ -424,3 +424,38 @@ func TestCompileReturn(t *testing.T) {
 		}
 	}
 }
+
+func TestCompileBreak(t *testing.T) {
+	input := "while(true) { while(true) { break; } break; }"
+	lexer := lexer.New("script", input)
+	parser := parser.New(lexer)
+	exprs := parser.ParseProgram()
+	compiler := New(exprs)
+
+	instructions := compiler.Compile()
+	expects := []string{
+		// outer while
+		"TFFLLFLLFFFT",  // mark label loop
+		"FFFLT",         // condition
+		"TLFLLFLLFFLLT", // jump label when zero
+
+		// inner while
+		"TFFLLFLLFFLT",  // mark label loop
+		"FFFLT",         // condition
+		"TLFLLFLLFFLFT", // jump label when zero
+		"TFTLLFLLFFLFT", // break, jump label to end
+		"TFTLLFLLFFLT",  // jump label to loop
+		"TFFLLFLLFFLFT", // mark label zero
+
+		// outer while
+		"TFTLLFLLFFLLT", // break, jump label to end
+		"TFTLLFLLFFFT",  // jump label to loop
+		"TFFLLFLLFFLLT", // mark label zero
+	}
+
+	for i, expect := range expects {
+		if instructions[i] != expect {
+			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, instructions[i])
+		}
+	}
+}

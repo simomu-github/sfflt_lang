@@ -11,6 +11,7 @@ type StatementVisitor interface {
 	VisitFunction(f Function)
 	VisitPut(s PutStatement)
 	VisitReturn(s Return)
+	VisitBreak(s Break)
 	VisitIf(s If)
 	VisitWhile(s While)
 	VisitBlock(s Block)
@@ -52,6 +53,14 @@ type Return struct {
 
 func (r Return) Visit(visitor StatementVisitor) {
 	visitor.VisitReturn(r)
+}
+
+type Break struct {
+	Token token.Token
+}
+
+func (b Break) Visit(visitor StatementVisitor) {
+	visitor.VisitBreak(b)
 }
 
 type If struct {

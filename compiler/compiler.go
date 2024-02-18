@@ -13,6 +13,7 @@ type Compiler struct {
 	functions           [][]string
 	labelIndex          int
 	isCompilingFunction bool
+	breakOffsets        [][]int
 }
 
 func New(statements []ast.Statement) *Compiler {
@@ -22,6 +23,7 @@ func New(statements []ast.Statement) *Compiler {
 		functions:           [][]string{},
 		labelIndex:          0,
 		isCompilingFunction: false,
+		breakOffsets:        [][]int{},
 	}
 }
 
@@ -79,6 +81,10 @@ func (c *Compiler) VisitReturn(s ast.Return) {
 	c.addInstruction(ENDSUB)
 }
 
+func (c *Compiler) VisitBreak(s ast.Break) {
+	c.addBreak()
+}
+
 func (c *Compiler) VisitIf(s ast.If) {
 	s.Condition.Visit(c)
 
@@ -98,6 +104,8 @@ func (c *Compiler) VisitIf(s ast.If) {
 }
 
 func (c *Compiler) VisitWhile(s ast.While) {
+	c.beginLoop()
+
 	trueJumpLabel := c.markJumpLabel()
 	s.Condition.Visit(c)
 	endJumpOffset := c.reserveJumpLabel(JUMP_WHEN_ZERO)
@@ -109,6 +117,12 @@ func (c *Compiler) VisitWhile(s ast.While) {
 
 	endLabel := c.markJumpLabel()
 	c.confirmJumpLabel(endJumpOffset, endLabel)
+	breakOffsets := c.currentBreakOffsets()
+	for _, offset := range breakOffsets {
+		c.confirmJumpLabel(offset, endLabel)
+	}
+
+	c.endLoop()
 }
 
 func (c *Compiler) VisitBlock(s ast.Block) {
@@ -339,6 +353,23 @@ func (c *Compiler) currentInstructions() []string {
 
 	idx := len(c.functions) - 1
 	return c.functions[idx]
+}
+
+func (c *Compiler) beginLoop() {
+	c.breakOffsets = append(c.breakOffsets, []int{})
+}
+
+func (c *Compiler) addBreak() {
+	offset := c.reserveJumpLabel(JUMP)
+	c.breakOffsets[len(c.breakOffsets)-1] = append(c.breakOffsets[len(c.breakOffsets)-1], offset)
+}
+
+func (c *Compiler) currentBreakOffsets() []int {
+	return c.breakOffsets[len(c.breakOffsets)-1]
+}
+
+func (c *Compiler) endLoop() {
+	c.breakOffsets = c.breakOffsets[:len(c.breakOffsets)-1]
 }
 
 func stringToBinary(ident string) string {

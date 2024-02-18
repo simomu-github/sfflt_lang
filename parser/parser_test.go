@@ -406,6 +406,30 @@ func TestParseReturn(t *testing.T) {
 	}
 }
 
+func TestParseBreak(t *testing.T) {
+	input := "while(true) break;"
+	lexer := lexer.New("script", input)
+	parser := New(lexer)
+	stmt := parser.ParseProgram()
+
+	whileStmt, ok := stmt[0].(ast.While)
+	if !ok {
+		t.Fatalf("Statement is not while")
+	}
+
+	b, ok := whileStmt.Body.(ast.Break)
+
+	if !ok {
+		t.Fatalf("Body is not Break")
+	}
+
+	tok := b.Token
+
+	if tok.Type != token.BREAK {
+		t.Fatalf("Break token is not match")
+	}
+}
+
 func TestParseAssign(t *testing.T) {
 	input := "a = 2"
 	lexer := lexer.New("script", input)

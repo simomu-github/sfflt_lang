@@ -10,12 +10,13 @@ import (
 )
 
 type Parser struct {
-	lexer        *lexer.Lexer
-	currentToken token.Token
-	peekToken    token.Token
-	isFunction   bool
-	hasError     bool
-	Errors       []string
+	lexer           *lexer.Lexer
+	currentToken    token.Token
+	peekToken       token.Token
+	isFunction      bool
+	loopNestedCount int
+	hasError        bool
+	Errors          []string
 }
 
 func New(lexer *lexer.Lexer) *Parser {
@@ -145,6 +146,10 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseReturn()
 	}
 
+	if p.currentToken.Type == token.BREAK {
+		return p.parseBreak()
+	}
+
 	expr := p.parseExpression()
 	if expr == nil {
 		return nil
@@ -189,6 +194,22 @@ func (p *Parser) parseReturn() ast.Statement {
 	return ast.Return{Value: expr}
 }
 
+func (p *Parser) parseBreak() ast.Statement {
+	if !p.isInLoop() {
+		p.parseError(p.currentToken, "Can not use 'break' out of loop.")
+		return nil
+	}
+
+	tok := p.currentToken
+	if p.peekToken.Type != token.SEMICOLON {
+		p.parseError(p.currentToken, "Expect ';' after statement.")
+		return nil
+	}
+	p.nextToken()
+
+	return ast.Break{Token: tok}
+}
+
 func (p *Parser) parseIf() ast.Statement {
 	p.nextToken()
 	if p.currentToken.Type != token.LPAREN {
@@ -218,6 +239,8 @@ func (p *Parser) parseIf() ast.Statement {
 }
 
 func (p *Parser) parseWhile() ast.Statement {
+	p.beginLoop()
+
 	p.nextToken()
 	if p.currentToken.Type != token.LPAREN {
 		p.parseError(p.currentToken, "Expect '(' after while.")
@@ -236,6 +259,7 @@ func (p *Parser) parseWhile() ast.Statement {
 
 	body := p.parseDeclaration()
 
+	p.endLoop()
 	return ast.While{Condition: condition, Body: body}
 }
 
@@ -396,6 +420,18 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 func (p *Parser) nextToken() {
 	p.currentToken = p.peekToken
 	p.peekToken = p.lexer.ScanToken()
+}
+
+func (p *Parser) beginLoop() {
+	p.loopNestedCount++
+}
+
+func (p *Parser) endLoop() {
+	p.loopNestedCount--
+}
+
+func (p *Parser) isInLoop() bool {
+	return p.loopNestedCount >= 1
 }
 
 func (p *Parser) parseError(tok token.Token, message string) {

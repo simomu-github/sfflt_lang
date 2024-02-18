@@ -39,6 +39,7 @@ const (
 	ELSE   = "ELSE"
 	WHILE  = "WHILE"
 	RETURN = "RETURN"
+	BREAK  = "BREAK"
 
 	PUTN = "PUTN"
 	PUTC = "PUTC"
@@ -65,6 +66,7 @@ var keywords = map[string]TokenType{
 	"else":   ELSE,
 	"while":  WHILE,
 	"return": RETURN,
+	"break":  BREAK,
 
 	"putn": PUTN,
 	"putc": PUTC,
