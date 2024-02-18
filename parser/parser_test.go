@@ -352,6 +352,63 @@ func TestParseEquality(t *testing.T) {
 	}
 }
 
+func TestParseAndOr(t *testing.T) {
+	input := "true || false && true"
+	lexer := lexer.New("script", input)
+	parser := New(lexer)
+	expr := parser.parseExpression()
+
+	binary, ok := expr.(ast.Binary)
+
+	if !ok {
+		t.Fatalf("Not Binary")
+	}
+
+	if binary.Operator.Type != token.OR {
+		t.Fatalf("Operator not OR get: %s", binary.Operator.Type)
+	}
+
+	left, ok := binary.Left.(ast.BooleanLiteral)
+
+	if !ok {
+		t.Fatalf("Left expression does not BooleanLiteral")
+	}
+
+	if left.Value != true {
+		t.Fatalf("Left expression value not match")
+	}
+
+	right, ok := binary.Right.(ast.Binary)
+
+	if !ok {
+		t.Fatalf("Right expression does not Binary")
+	}
+
+	if right.Operator.Type != token.AND {
+		t.Fatalf("Right binary expression oeprator not match")
+	}
+
+	rl, ok := right.Left.(ast.BooleanLiteral)
+
+	if !ok {
+		t.Fatalf("Right left expression does not BooleanLiteral")
+	}
+
+	if rl.Value != false {
+		t.Fatalf("Right left expression value not match")
+	}
+
+	ll, ok := right.Right.(ast.BooleanLiteral)
+
+	if !ok {
+		t.Fatalf("Right right expression does not BooleanLiteral")
+	}
+
+	if ll.Value != true {
+		t.Fatalf("Right right expression value not match")
+	}
+}
+
 func TestParsePut(t *testing.T) {
 	input := "putn 1;"
 	lexer := lexer.New("script", input)

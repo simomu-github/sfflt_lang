@@ -80,6 +80,16 @@ func (l *Lexer) ScanToken() token.Token {
 		} else {
 			return l.makeToken(token.GT, string(char))
 		}
+	case '&':
+		if l.peekChar() == '&' {
+			nextChar := l.readChar()
+			return l.makeToken(token.AND, string(char)+string(nextChar))
+		}
+	case '|':
+		if l.peekChar() == '|' {
+			nextChar := l.readChar()
+			return l.makeToken(token.OR, string(char)+string(nextChar))
+		}
 	case '\'':
 		return l.scanChar()
 	case 0:

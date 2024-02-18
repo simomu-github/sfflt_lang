@@ -24,6 +24,9 @@ const (
 	EQ     = "=="
 	NOT_EQ = "!="
 
+	AND = "&&"
+	OR  = "||"
+
 	SEMICOLON = ";"
 
 	LPAREN = "("

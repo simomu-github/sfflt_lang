@@ -283,19 +283,45 @@ func (p *Parser) parseExpression() ast.Expression {
 }
 
 func (p *Parser) parseAssign() ast.Expression {
-	expr := p.parseEquality()
+	expr := p.parseOr()
 
 	switch p.peekToken.Type {
 	case token.ASSIGN:
 		p.nextToken()
 		p.nextToken()
-		right := p.parseComparison()
+		right := p.parseOr()
 		variable, ok := expr.(ast.Variable)
 		if !ok {
 			p.parseError(p.currentToken, "Invalid assignment target.")
 			return nil
 		}
 		return ast.Assign{Target: variable.Identifier, Expression: right}
+	}
+
+	return expr
+}
+
+func (p *Parser) parseOr() ast.Expression {
+	expr := p.parseAnd()
+	for p.matchPeekToken(token.OR) {
+		p.nextToken()
+		operator := p.currentToken
+		p.nextToken()
+		right := p.parseAnd()
+		expr = ast.Binary{Left: expr, Operator: operator, Right: right}
+	}
+
+	return expr
+}
+
+func (p *Parser) parseAnd() ast.Expression {
+	expr := p.parseEquality()
+	for p.matchPeekToken(token.AND) {
+		p.nextToken()
+		operator := p.currentToken
+		p.nextToken()
+		right := p.parseEquality()
+		expr = ast.Binary{Left: expr, Operator: operator, Right: right}
 	}
 
 	return expr

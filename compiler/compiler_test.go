@@ -245,6 +245,67 @@ func TestCompileEquality(t *testing.T) {
 	}
 }
 
+func TestCompileAnd(t *testing.T) {
+	input := "true && false;"
+	lexer := lexer.New("script", input)
+	parser := parser.New(lexer)
+	exprs := parser.ParseProgram()
+	compiler := New(exprs)
+
+	instructions := compiler.Compile()
+	expects := []string{
+		"FFFLT",        // push lhs
+		"TLFLLFLLFFFT", // jump label when zero
+		"FFFFT",        // push rhs
+		"TLFLLFLLFFFT", // jump label when zero
+		"FFFLT",        // push 1
+		"TFTLLFLLFFLT", // jump label to end
+		"TFFLLFLLFFFT", // mark label when zero
+		"FFFFT",        // push 0
+		"TFFLLFLLFFLT", // mark label end
+		"FTT",          // discard
+	}
+
+	for i, expect := range expects {
+		if instructions[i] != expect {
+			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, instructions[i])
+		}
+	}
+}
+
+func TestCompileOr(t *testing.T) {
+	input := "true || false;"
+	lexer := lexer.New("script", input)
+	parser := parser.New(lexer)
+	exprs := parser.ParseProgram()
+	compiler := New(exprs)
+
+	instructions := compiler.Compile()
+	expects := []string{
+		"FFFLT",         // push lhs
+		"TLFLLFLLFFFT",  // jump label when zero
+		"FFFLT",         // push 1
+		"TFTLLFLLFFLFT", // jump label to end
+
+		"TFFLLFLLFFFT",  // mark label when zero
+		"FFFFT",         // push rhs
+		"TLFLLFLLFFLT",  // jump label when zero
+		"FFFLT",         // push 1
+		"TFTLLFLLFFLFT", // jump label to end
+
+		"TFFLLFLLFFLT",  // mark label when zero
+		"FFFFT",         // push 0
+		"TFFLLFLLFFLFT", // mark label end
+		"FTT",           // discard
+	}
+
+	for i, expect := range expects {
+		if instructions[i] != expect {
+			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, instructions[i])
+		}
+	}
+}
+
 func TestCompileAssign(t *testing.T) {
 	input := "var a = 1; a = 2;"
 	lexer := lexer.New("script", input)

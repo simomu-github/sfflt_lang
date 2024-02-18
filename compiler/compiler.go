@@ -150,7 +150,6 @@ func (c *Compiler) VisitAssign(s ast.Assign) {
 
 func (c *Compiler) VisitBinaryExpression(e ast.Binary) {
 	e.Left.Visit(c)
-	e.Right.Visit(c)
 	var instruction InstructionType
 	switch e.Operator.Type {
 	case token.PLUS:
@@ -164,13 +163,22 @@ func (c *Compiler) VisitBinaryExpression(e ast.Binary) {
 	case token.MOD:
 		instruction = MOD
 	case token.LT, token.LTEQ, token.GT, token.GTEQ:
+		e.Right.Visit(c)
 		c.comparison(e)
 		return
 	case token.EQ, token.NOT_EQ:
+		e.Right.Visit(c)
 		c.equality(e)
+		return
+	case token.AND:
+		c.and(e)
+		return
+	case token.OR:
+		c.or(e)
 		return
 	}
 
+	e.Right.Visit(c)
 	c.addInstruction(instruction)
 }
 
@@ -231,6 +239,48 @@ func (c *Compiler) comparison(e ast.Binary) {
 
 	endLabel := c.markJumpLabel()
 	c.confirmJumpLabel(endJumpOffset, endLabel)
+}
+
+func (c *Compiler) and(e ast.Binary) {
+	lhsJumpOffset := c.reserveJumpLabel(JUMP_WHEN_ZERO)
+
+	e.Right.Visit(c)
+
+	rhsJumpOffset := c.reserveJumpLabel(JUMP_WHEN_ZERO)
+
+	c.addInstructionWithParam(PUSH, ONE)
+	endJumpOffset := c.reserveJumpLabel(JUMP)
+
+	zeroLabel := c.markJumpLabel()
+	c.confirmJumpLabel(lhsJumpOffset, zeroLabel)
+	c.confirmJumpLabel(rhsJumpOffset, zeroLabel)
+	c.addInstructionWithParam(PUSH, ZERO)
+
+	endLabel := c.markJumpLabel()
+	c.confirmJumpLabel(endJumpOffset, endLabel)
+}
+
+func (c *Compiler) or(e ast.Binary) {
+	lhsJumpZeroOffset := c.reserveJumpLabel(JUMP_WHEN_ZERO)
+	c.addInstructionWithParam(PUSH, ONE)
+	lhsJumpEndOffset := c.reserveJumpLabel(JUMP)
+
+	lhsJumpZeroLabel := c.markJumpLabel()
+	c.confirmJumpLabel(lhsJumpZeroOffset, lhsJumpZeroLabel)
+	e.Right.Visit(c)
+
+	rhsJumpZeroOffset := c.reserveJumpLabel(JUMP_WHEN_ZERO)
+	c.addInstructionWithParam(PUSH, ONE)
+	rhsJumpEndOffset := c.reserveJumpLabel(JUMP)
+
+	rhsJumpZeroLabel := c.markJumpLabel()
+	c.confirmJumpLabel(rhsJumpZeroOffset, rhsJumpZeroLabel)
+
+	c.addInstructionWithParam(PUSH, ZERO)
+
+	endLabel := c.markJumpLabel()
+	c.confirmJumpLabel(lhsJumpEndOffset, endLabel)
+	c.confirmJumpLabel(rhsJumpEndOffset, endLabel)
 }
 
 func (c *Compiler) VisitUnaryExpression(e ast.Unary) {
