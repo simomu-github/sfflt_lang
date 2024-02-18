@@ -15,7 +15,7 @@ import (
 
 var (
 	versionOpt = flag.Bool("v", false, "display version information")
-	formatOpt  = flag.String("format", "64", "output code format. [online, pretty, (number of column)]")
+	formatOpt  = flag.String("format", "64", "output code format. [oneline, pretty, (number of column)]")
 )
 
 const version = "v0.0.1"
@@ -62,18 +62,18 @@ func Compile(path string) int {
 	outputFilename := getFilenameWithoutExt(path) + ".fflt"
 	var output string
 	switch *formatOpt {
-	case "online":
+	case "oneline":
 		output = formatter.FormatOneLine(instructions)
 	case "pretty":
 		output = formatter.FormatRaw(instructions)
 	default:
 		column, err := strconv.Atoi(*formatOpt)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Invalid format option. [online, pretty, (number of column)]\n")
+			fmt.Fprintf(os.Stderr, "Invalid format option. [oneline, pretty, (number of column)]\n")
 			return 1
 		}
 		if column <= 0 {
-			fmt.Fprintf(os.Stderr, "Invalid format option. [online, pretty, (number of column)]\n")
+			fmt.Fprintf(os.Stderr, "Invalid format option. [oneline, pretty, (number of column)]\n")
 			return 1
 		}
 		output = formatter.FormatSquere(instructions, column)
