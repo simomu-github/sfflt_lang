@@ -146,6 +146,10 @@ func (p *Parser) parseStatement() ast.Statement {
 	}
 
 	expr := p.parseExpression()
+	if expr == nil {
+		return nil
+	}
+
 	if p.peekToken.Type != token.SEMICOLON {
 		p.parseError(p.currentToken, "Expect ';' after statement.")
 		return nil
