@@ -13,6 +13,7 @@ type Compiler struct {
 	functions           [][]string
 	labelIndex          int
 	isCompilingFunction bool
+	functionParamLength int
 	breakOffsets        [][]int
 }
 
@@ -52,6 +53,7 @@ func (c *Compiler) VisitVar(s ast.Var) {
 
 func (c *Compiler) VisitFunction(s ast.Function) {
 	c.isCompilingFunction = true
+	c.functionParamLength = len(s.Params)
 
 	c.functions = append(c.functions, []string{})
 	ident := stringToBinary("gf" + s.Name.Literal)
@@ -61,6 +63,10 @@ func (c *Compiler) VisitFunction(s ast.Function) {
 		stmt.Visit(c)
 	}
 	c.addInstructionWithParam(PUSH, ZERO)
+	if len(s.Params) != 0 {
+		slideLength := intToBinary(int64(len(s.Params)))
+		c.addInstructionWithParam(SLIDE, POSI+slideLength)
+	}
 	c.addInstruction(ENDSUB)
 
 	c.isCompilingFunction = false
@@ -78,6 +84,10 @@ func (c *Compiler) VisitPut(s ast.PutStatement) {
 
 func (c *Compiler) VisitReturn(s ast.Return) {
 	s.Value.Visit(c)
+	if c.functionParamLength != 0 {
+		slideLength := intToBinary(int64(c.functionParamLength))
+		c.addInstructionWithParam(SLIDE, POSI+slideLength)
+	}
 	c.addInstruction(ENDSUB)
 }
 
@@ -312,6 +322,9 @@ func (c *Compiler) VisitUnaryExpression(e ast.Unary) {
 }
 
 func (c *Compiler) VisitCall(e ast.Call) {
+	for _, arg := range e.Arguments {
+		arg.Visit(c)
+	}
 	ident := stringToBinary("gf" + e.Callee.Literal)
 	c.addInstructionWithParam(CALLSUB, ident)
 }
@@ -341,6 +354,20 @@ func (c *Compiler) VisitBooleanLiteral(e ast.BooleanLiteral) {
 }
 
 func (c *Compiler) VisitVariable(e ast.Variable) {
+	if e.IsArgument {
+		c.argumentVariable(e)
+	} else {
+		c.globalVariable(e)
+	}
+}
+
+func (c *Compiler) argumentVariable(e ast.Variable) {
+	offset := c.functionParamLength - e.ArgumentIndex + e.RelativeIndex
+	param := intToBinary(int64(offset))
+	c.addInstructionWithParam(COPY, POSI+param)
+}
+
+func (c *Compiler) globalVariable(e ast.Variable) {
 	ident := stringToBinary("gv" + e.Identifier.Literal)
 	c.addInstructionWithParam(PUSH, POSI+ident)
 	c.addInstruction(RETRIEVE)

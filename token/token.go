@@ -27,6 +27,7 @@ const (
 	AND = "&&"
 	OR  = "||"
 
+	COMMA     = ","
 	SEMICOLON = ";"
 
 	LPAREN = "("

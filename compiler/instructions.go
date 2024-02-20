@@ -5,6 +5,8 @@ const (
 	DUP     = "FTF"
 	SWAP    = "FTL"
 	DISCARD = "FTT"
+	COPY    = "FLF"
+	SLIDE   = "FLT"
 
 	ADD = "LFFF"
 	SUB = "LFFL"

@@ -15,12 +15,18 @@ type Parser struct {
 	peekToken       token.Token
 	isFunction      bool
 	loopNestedCount int
+	stackTop        int
+	scopes          []map[string]argVariable
 	hasError        bool
 	Errors          []string
 }
 
+type argVariable struct {
+	argumentIndex int
+}
+
 func New(lexer *lexer.Lexer) *Parser {
-	p := &Parser{lexer: lexer, isFunction: false, Errors: []string{}}
+	p := &Parser{lexer: lexer, isFunction: false, Errors: []string{}, scopes: []map[string]argVariable{}}
 	p.nextToken()
 	p.nextToken()
 	return p
@@ -88,6 +94,7 @@ func (p *Parser) parseVarDeclaration() ast.Statement {
 }
 
 func (p *Parser) parseFunctionDecaration() ast.Statement {
+	p.beginScope()
 	p.isFunction = true
 	p.nextToken()
 
@@ -104,7 +111,25 @@ func (p *Parser) parseFunctionDecaration() ast.Statement {
 	}
 	p.nextToken()
 
-	// TODO: arguments
+	params := []token.Token{}
+	if p.currentToken.Type != token.RPAREN {
+		for {
+			if p.currentToken.Type != token.IDENT {
+				p.parseError(p.currentToken, "Expect argument name.")
+				return nil
+			}
+
+			params = append(params, p.currentToken)
+			p.declareVariable(p.currentToken, len(params))
+
+			p.nextToken()
+			if p.currentToken.Type == token.COMMA {
+				p.nextToken()
+			} else {
+				break
+			}
+		}
+	}
 
 	if p.currentToken.Type != token.RPAREN {
 		p.parseError(p.currentToken, "Expect ')' after parameters.")
@@ -120,8 +145,9 @@ func (p *Parser) parseFunctionDecaration() ast.Statement {
 	body := p.parseBlock().(ast.Block)
 
 	p.isFunction = false
+	p.endScope()
 
-	return ast.Function{Name: name, Body: body.Statements}
+	return ast.Function{Name: name, Params: params, Body: body.Statements}
 }
 
 func (p *Parser) parseStatement() ast.Statement {
@@ -279,7 +305,9 @@ func (p *Parser) parseBlock() ast.Statement {
 }
 
 func (p *Parser) parseExpression() ast.Expression {
-	return p.parseAssign()
+	expr := p.parseAssign()
+	p.popStack()
+	return expr
 }
 
 func (p *Parser) parseAssign() ast.Expression {
@@ -293,6 +321,10 @@ func (p *Parser) parseAssign() ast.Expression {
 		variable, ok := expr.(ast.Variable)
 		if !ok {
 			p.parseError(p.currentToken, "Invalid assignment target.")
+			return nil
+		}
+		if variable.IsArgument {
+			p.parseError(p.currentToken, "Can not assign to argument variable.")
 			return nil
 		}
 		return ast.Assign{Target: variable.Identifier, Expression: right}
@@ -309,6 +341,7 @@ func (p *Parser) parseOr() ast.Expression {
 		p.nextToken()
 		right := p.parseAnd()
 		expr = ast.Binary{Left: expr, Operator: operator, Right: right}
+		p.popStack()
 	}
 
 	return expr
@@ -322,6 +355,7 @@ func (p *Parser) parseAnd() ast.Expression {
 		p.nextToken()
 		right := p.parseEquality()
 		expr = ast.Binary{Left: expr, Operator: operator, Right: right}
+		p.popStack()
 	}
 
 	return expr
@@ -335,7 +369,9 @@ func (p *Parser) parseEquality() ast.Expression {
 		operator := p.currentToken
 		p.nextToken()
 		right := p.parseComparison()
-		return ast.Binary{Left: expr, Operator: operator, Right: right}
+		e := ast.Binary{Left: expr, Operator: operator, Right: right}
+		p.popStack()
+		return e
 	}
 
 	return expr
@@ -349,7 +385,9 @@ func (p *Parser) parseComparison() ast.Expression {
 		operator := p.currentToken
 		p.nextToken()
 		right := p.parseTerm()
-		return ast.Binary{Left: expr, Operator: operator, Right: right}
+		e := ast.Binary{Left: expr, Operator: operator, Right: right}
+		p.popStack()
+		return e
 	}
 
 	return expr
@@ -363,6 +401,7 @@ func (p *Parser) parseTerm() ast.Expression {
 		p.nextToken()
 		right := p.parseFactor()
 		expr = ast.Binary{Left: expr, Operator: operator, Right: right}
+		p.popStack()
 	}
 
 	return expr
@@ -376,6 +415,7 @@ func (p *Parser) parseFactor() ast.Expression {
 		p.nextToken()
 		right := p.parseUnary()
 		expr = ast.Binary{Left: expr, Operator: operator, Right: right}
+		p.popStack()
 	}
 
 	return expr
@@ -386,7 +426,7 @@ func (p *Parser) parseUnary() ast.Expression {
 	case token.MINUS, token.BANG:
 		operator := p.currentToken
 		p.nextToken()
-		return ast.Unary{Operator: operator, Right: p.parsePrimary()}
+		return ast.Unary{Operator: operator, Right: p.parseCall()}
 	}
 
 	return p.parseCall()
@@ -398,12 +438,27 @@ func (p *Parser) parseCall() ast.Expression {
 		callee := p.currentToken
 		p.nextToken()
 		p.nextToken()
-		// TODO: parse arguments
+
+		arguments := []ast.Expression{}
+		if p.currentToken.Type != token.RPAREN {
+			for {
+				arguments = append(arguments, p.parseExpression())
+
+				p.nextToken()
+				if p.currentToken.Type == token.COMMA {
+					p.nextToken()
+				} else {
+					break
+				}
+			}
+		}
+
 		if p.currentToken.Type != token.RPAREN {
 			p.parseError(p.currentToken, "Expect ')' after arguments.")
 			return nil
 		}
-		return ast.Call{Callee: callee}
+		p.pushStack()
+		return ast.Call{Callee: callee, Arguments: arguments}
 	}
 
 	return p.parsePrimary()
@@ -414,12 +469,15 @@ func (p *Parser) parsePrimary() ast.Expression {
 	case token.INT:
 		return p.parseIntegerLiteral()
 	case token.CHAR:
+		p.pushStack()
 		return ast.CharLiteral{Token: p.currentToken, Value: p.currentToken.Literal}
 	case token.IDENT:
-		return ast.Variable{Identifier: p.currentToken}
+		return p.parseVariable()
 	case token.GETC, token.GETN:
+		p.pushStack()
 		return ast.Get{Token: p.currentToken}
 	case token.TRUE, token.FALSE:
+		p.pushStack()
 		return ast.BooleanLiteral{Token: p.currentToken, Value: p.currentToken.Type == token.TRUE}
 	case token.LPAREN:
 		p.nextToken()
@@ -429,6 +487,7 @@ func (p *Parser) parsePrimary() ast.Expression {
 			p.parseError(p.currentToken, "Expect ')' after expression.")
 			return nil
 		}
+		p.pushStack()
 		return expr
 	}
 
@@ -437,8 +496,25 @@ func (p *Parser) parsePrimary() ast.Expression {
 }
 
 func (p *Parser) parseIntegerLiteral() ast.Expression {
+	p.pushStack()
 	value, _ := strconv.ParseInt(p.currentToken.Literal, 0, 64)
 	return ast.IntegerLiteral{Token: p.currentToken, Value: value}
+}
+
+func (p *Parser) parseVariable() ast.Expression {
+	if p.isFunction {
+		if arg := p.resolveLocal(p.currentToken); arg != nil {
+			top := p.stackTop
+			p.pushStack()
+			return ast.Variable{
+				Identifier:    p.currentToken,
+				IsArgument:    true,
+				ArgumentIndex: arg.argumentIndex,
+				RelativeIndex: top,
+			}
+		}
+	}
+	return ast.Variable{Identifier: p.currentToken}
 }
 
 func (p *Parser) nextToken() {
@@ -467,6 +543,45 @@ func (p *Parser) endLoop() {
 
 func (p *Parser) isInLoop() bool {
 	return p.loopNestedCount >= 1
+}
+
+func (p *Parser) pushStack() {
+	p.stackTop++
+}
+
+func (p *Parser) popStack() {
+	p.stackTop--
+}
+
+func (p *Parser) beginScope() {
+	p.scopes = append(p.scopes, map[string]argVariable{})
+}
+
+func (p *Parser) endScope() {
+	p.scopes = p.scopes[:len(p.scopes)-1]
+}
+
+func (p *Parser) declareVariable(name token.Token, argumentIndex int) {
+	if len(p.scopes) == 0 {
+		return
+	}
+	scope := p.scopes[len(p.scopes)-1]
+	if _, ok := scope[name.Literal]; ok {
+		p.parseError(p.currentToken, "ALready avariable with this name in this scope.")
+		return
+	}
+
+	scope[name.Literal] = argVariable{argumentIndex: argumentIndex}
+}
+
+func (p *Parser) resolveLocal(name token.Token) *argVariable {
+	for i := len(p.scopes) - 1; i >= 0; i-- {
+		if result, ok := p.scopes[i][name.Literal]; ok {
+			return &result
+		}
+	}
+
+	return nil
 }
 
 func (p *Parser) parseError(tok token.Token, message string) {

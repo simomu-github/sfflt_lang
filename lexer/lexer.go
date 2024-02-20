@@ -49,6 +49,8 @@ func (l *Lexer) ScanToken() token.Token {
 		return l.makeToken(token.LBRACE, string(char))
 	case '}':
 		return l.makeToken(token.RBRACE, string(char))
+	case ',':
+		return l.makeToken(token.COMMA, string(char))
 	case ';':
 		return l.makeToken(token.SEMICOLON, string(char))
 
