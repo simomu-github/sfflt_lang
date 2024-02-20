@@ -178,7 +178,10 @@ func (l BooleanLiteral) Visit(visitor ExpressionVisitor) {
 }
 
 type Variable struct {
-	Identifier token.Token
+	Identifier    token.Token
+	IsArgument    bool
+	ArgumentIndex int
+	RelativeIndex int
 }
 
 func (v Variable) Visit(visitor ExpressionVisitor) {

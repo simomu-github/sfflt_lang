@@ -97,6 +97,42 @@ func TestParsePrimary(t *testing.T) {
 	}
 }
 
+func TestParseArgumentVariable(t *testing.T) {
+	input := "func f(a, b, c) { 1 + b; }"
+	lexer := lexer.New("script", input)
+	parser := New(lexer)
+	stmt := parser.ParseProgram()
+
+	f, ok := stmt[0].(ast.Function)
+	if !ok {
+		t.Fatalf("Statement is not function")
+	}
+
+	expr, ok := f.Body[0].(ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("Body is not ExpressionStatement")
+	}
+
+	b, ok := expr.Expression.(ast.Binary)
+	if !ok {
+		t.Fatalf("Expression is not Binary")
+	}
+
+	v := b.Right.(ast.Variable)
+
+	if !v.IsArgument {
+		t.Fatalf("Variale is not argument")
+	}
+
+	if v.ArgumentIndex != 2 {
+		t.Fatalf("Argument index is not match")
+	}
+
+	if v.RelativeIndex != 1 {
+		t.Fatalf("Relative index is not match")
+	}
+}
+
 func TestCall(t *testing.T) {
 	input := "test(1, 2)"
 	lexer := lexer.New("script", input)
