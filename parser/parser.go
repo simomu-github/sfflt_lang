@@ -323,6 +323,10 @@ func (p *Parser) parseAssign() ast.Expression {
 			p.parseError(p.currentToken, "Invalid assignment target.")
 			return nil
 		}
+		if variable.IsArgument {
+			p.parseError(p.currentToken, "Can not assign to argument variable.")
+			return nil
+		}
 		return ast.Assign{Target: variable.Identifier, Expression: right}
 	}
 
