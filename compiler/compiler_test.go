@@ -67,7 +67,7 @@ func TestCompileBang(t *testing.T) {
 }
 
 func TestCompileCall(t *testing.T) {
-	input := "a();"
+	input := "a(1, 2, 3);"
 	lexer := lexer.New("script", input)
 	parser := parser.New(lexer)
 	exprs := parser.ParseProgram()
@@ -75,7 +75,10 @@ func TestCompileCall(t *testing.T) {
 
 	instructions := compiler.Compile()
 	expects := []string{
-		"TFLLLFFLLLLLFFLLFLLFFFFLT",
+		"FFFLT",                     // push 1
+		"FFFLFT",                    // push 2
+		"FFFLLT",                    // push 3
+		"TFLLLFFLLLLLFFLLFLLFFFFLT", // call sub
 	}
 
 	for i, expect := range expects {
@@ -425,6 +428,33 @@ func TestCompileGlobalVariable(t *testing.T) {
 		"FFFLLFFLLLLLLFLLFLLFFFFLT",
 		"LLL",
 		"FTT",
+	}
+
+	for i, expect := range expects {
+		if instructions[i] != expect {
+			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, instructions[i])
+		}
+	}
+}
+
+func TestCompileArgumentVariable(t *testing.T) {
+	input := "func f(a, b, c) { a + c; }"
+	lexer := lexer.New("script", input)
+	parser := parser.New(lexer)
+	exprs := parser.ParseProgram()
+	compiler := New(exprs)
+
+	instructions := compiler.Compile()
+	expects := []string{
+		"TTT",
+		"TFFLLFFLLLLLFFLLFLLFFLLFT",
+		"FLFFLFT", // copy 2
+		"FLFFLT",  // copy 1
+		"LFFF",    // add
+		"FTT",     // discard
+		"FFFFT",   // push 0
+		"FLTFLLT", // slide 3
+		"TLT",     // end sub
 	}
 
 	for i, expect := range expects {
