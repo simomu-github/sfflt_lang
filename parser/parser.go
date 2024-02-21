@@ -94,6 +94,11 @@ func (p *Parser) parseVarDeclaration() ast.Statement {
 }
 
 func (p *Parser) parseFunctionDecaration() ast.Statement {
+	if p.isFunction {
+		p.parseError(p.currentToken, "Can not declare function inner function.")
+		return nil
+	}
+
 	p.beginScope()
 	p.isFunction = true
 	p.nextToken()
@@ -605,7 +610,8 @@ func (p *Parser) skipStatement() {
 		}
 
 		switch p.peekToken.Type {
-		case token.VAR, token.IF, token.WHILE, token.PUTN, token.PUTC, token.GETN, token.GETC:
+		case token.VAR, token.FUNC, token.RETURN, token.BREAK, token.IF,
+			token.WHILE, token.PUTN, token.PUTC, token.GETN, token.GETC:
 			return
 		}
 		p.nextToken()
