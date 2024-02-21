@@ -1,6 +1,8 @@
 package lexer
 
-import "github.com/simomu-github/sfflt_lang/token"
+import (
+	"github.com/simomu-github/sfflt_lang/token"
+)
 
 type Lexer struct {
 	Filename string
@@ -28,6 +30,10 @@ func (l *Lexer) ScanToken() token.Token {
 
 	l.start = l.current
 	char := l.readChar()
+
+	for char == '/' && l.peekChar() == '/' {
+		char = l.skipComment()
+	}
 
 	switch char {
 	case '+':
@@ -145,6 +151,29 @@ func (l *Lexer) skipWhitespace() {
 			l.column = 0
 		default:
 			return
+		}
+	}
+}
+
+func (l *Lexer) skipComment() byte {
+	for {
+		switch l.peekChar() {
+		case '\n':
+			l.readChar()
+			l.line += 1
+			l.column = 0
+
+			l.skipWhitespace()
+
+			l.start = l.current
+			char := l.readChar()
+			return char
+		case 0:
+			l.start = l.current
+			l.readChar()
+			return 0
+		default:
+			l.readChar()
 		}
 	}
 }

@@ -7,7 +7,7 @@ import (
 )
 
 func TestScanToken(t *testing.T) {
-	input := `(){},;
+	input := `(){},; // this is comment
 +-*/%=!
 ==
 !=
