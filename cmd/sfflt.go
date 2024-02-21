@@ -57,6 +57,15 @@ func Compile(path string) int {
 		return 1
 	}
 
+	resolver := compiler.NewResolver(path, statements)
+	resolver.Resolve()
+	if resolver.HadErrors() {
+		for _, err := range resolver.Errors {
+			fmt.Fprintf(os.Stderr, err)
+		}
+		return 1
+	}
+
 	compiler := compiler.New(statements)
 	instructions := compiler.Compile()
 	outputFilename := getFilenameWithoutExt(path) + ".fflt"
