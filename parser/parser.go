@@ -61,7 +61,7 @@ func (p *Parser) parseDeclaration() ast.Statement {
 	}
 
 	if p.currentToken.Type == token.FUNC {
-		return p.parseFunctionDecaration()
+		return p.parseFunctionDeclaration()
 	}
 
 	return p.parseStatement()
@@ -93,7 +93,7 @@ func (p *Parser) parseVarDeclaration() ast.Statement {
 	return ast.Var{Identifier: identifier, Expression: expr}
 }
 
-func (p *Parser) parseFunctionDecaration() ast.Statement {
+func (p *Parser) parseFunctionDeclaration() ast.Statement {
 	if p.isFunction {
 		p.parseError(p.currentToken, "Can not declare function inner function.")
 		return nil
