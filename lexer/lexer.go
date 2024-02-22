@@ -236,6 +236,8 @@ func (l *Lexer) convertEscapeSequence(ch byte) (byte, error) {
 		return 12, nil
 	case 'r':
 		return 13, nil
+	case '\'', '\\':
+		return ch, nil
 	}
 
 	return ch, errors.New("Unexpected escape sequence")
