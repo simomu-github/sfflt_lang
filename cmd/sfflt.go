@@ -1,12 +1,14 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
 
+	"github.com/simomu-github/sfflt_lang/ast"
 	"github.com/simomu-github/sfflt_lang/compiler"
 	"github.com/simomu-github/sfflt_lang/formatter"
 	"github.com/simomu-github/sfflt_lang/lexer"
@@ -33,18 +35,24 @@ func main() {
 	}
 
 	if len(flag.Args()) == 1 {
-		os.Exit(Compile(flag.Args()[0]))
+		filepath := flag.Args()[0]
+		stmts, err := Parse(filepath)
+		if err != nil {
+			os.Exit(1)
+		}
+		os.Exit(Compile(filepath, stmts))
 	} else {
 		flag.Usage()
 		os.Exit(1)
 	}
 }
 
-func Compile(path string) int {
+func Parse(path string) ([]ast.Statement, error) {
 	bytes, err := os.ReadFile(path)
+
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
-		return 1
+		return nil, err
 	}
 
 	lexer := lexer.New(path, string(bytes))
@@ -54,7 +62,7 @@ func Compile(path string) int {
 		for _, err := range parser.Errors {
 			fmt.Fprintf(os.Stderr, err)
 		}
-		return 1
+		return nil, errors.New("parse error.")
 	}
 
 	resolver := compiler.NewResolver(path, statements)
@@ -63,33 +71,42 @@ func Compile(path string) int {
 		for _, err := range resolver.Errors {
 			fmt.Fprintf(os.Stderr, err)
 		}
-		return 1
+		return nil, errors.New("resolve error.")
 	}
 
+	return statements, nil
+}
+
+func Compile(path string, statements []ast.Statement) int {
 	compiler := compiler.New(statements)
-	instructions := compiler.Compile()
+	output, err := FormatInstructions(compiler.Compile())
+	if err != nil {
+		return 1
+	}
 	outputFilename := getFilenameWithoutExt(path) + ".fflt"
-	var output string
+	os.WriteFile(outputFilename, []byte(output), 0644)
+
+	return 0
+}
+
+func FormatInstructions(instructions []string) (string, error) {
 	switch *formatOpt {
 	case "oneline":
-		output = formatter.FormatOneLine(instructions)
+		return formatter.FormatOneLine(instructions), nil
 	case "pretty":
-		output = formatter.FormatRaw(instructions)
+		return formatter.FormatRaw(instructions), nil
 	default:
 		column, err := strconv.Atoi(*formatOpt)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Invalid format option. [oneline, pretty, (number of column)]\n")
-			return 1
+			return "", errors.New("instruction format error.")
 		}
 		if column <= 0 {
 			fmt.Fprintf(os.Stderr, "Invalid format option. [oneline, pretty, (number of column)]\n")
-			return 1
+			return "", errors.New("instruction format error.")
 		}
-		output = formatter.FormatSquere(instructions, column)
+		return formatter.FormatSquere(instructions, column), nil
 	}
-	os.WriteFile(outputFilename, []byte(output), 0644)
-
-	return 0
 }
 
 func getFilenameWithoutExt(path string) string {
