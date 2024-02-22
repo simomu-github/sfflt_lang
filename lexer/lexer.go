@@ -1,6 +1,8 @@
 package lexer
 
 import (
+	"errors"
+
 	"github.com/simomu-github/sfflt_lang/token"
 )
 
@@ -179,8 +181,17 @@ func (l *Lexer) skipComment() byte {
 }
 
 func (l *Lexer) scanChar() token.Token {
-
-	char := l.readChar()
+	var char byte
+	var err error
+	if l.peekChar() == '\\' {
+		l.readChar()
+		char, err = l.convertEscapeSequence(l.readChar())
+		if err != nil {
+			return l.makeToken(token.ILLEGAL, string(char))
+		}
+	} else {
+		char = l.readChar()
+	}
 
 	if l.peekChar() != '\'' || l.isAtEnd() {
 		return l.makeToken(token.ILLEGAL, "Unterminated char.")
@@ -205,6 +216,29 @@ func (l *Lexer) scanIdentifier() token.Token {
 
 	identifier := l.source[l.start:l.current]
 	return l.makeToken(token.LookupIdent(identifier), identifier)
+}
+
+func (l *Lexer) convertEscapeSequence(ch byte) (byte, error) {
+	switch ch {
+	case '0':
+		return 0, nil
+	case 'a':
+		return 7, nil
+	case 'b':
+		return 8, nil
+	case 't':
+		return 9, nil
+	case 'n':
+		return 10, nil
+	case 'v':
+		return 11, nil
+	case 'f':
+		return 12, nil
+	case 'r':
+		return 13, nil
+	}
+
+	return ch, errors.New("Unexpected escape sequence")
 }
 
 func (l *Lexer) makeToken(tokenType token.TokenType, literal string) token.Token {
