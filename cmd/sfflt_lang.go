@@ -24,13 +24,13 @@ const version = "v0.0.1"
 
 func main() {
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: sfflt (option) [FILE]\n")
+		fmt.Fprintf(os.Stderr, "Usage: sfflt_lang (option) [FILE]\n")
 		flag.PrintDefaults()
 	}
 
 	flag.Parse()
 	if *versionOpt {
-		fmt.Printf("sfflt version %s\n", version)
+		fmt.Printf("sfflt_lang version %s\n", version)
 		os.Exit(0)
 	}
 

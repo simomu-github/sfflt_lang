@@ -24,7 +24,7 @@ TEST_TARGET=...
 .PHONY: build deps test clean $(BUILD_TARGETS) $(RELEASE_TARGETS)
 
 build: deps
-	go build -o releases/sfflt_lang_$(GOOS)_$(GOARCH)/sfflt_lang$(SUFFIX) cmd/sfflt.go
+	go build -o releases/sfflt_lang_$(GOOS)_$(GOARCH)/sfflt_lang$(SUFFIX) cmd/sfflt_lang.go
 
 build-windows-amd64:
 	$(MAKE) build GOOS=windows GOARCH=amd64 SUFFIX=.exe
@@ -79,7 +79,7 @@ release-darwin-arm64:
 release-all: $(RELEASE_TARGETS)
 
 run_test_script:
-	go run cmd/sfflt.go -format pretty test.sflt
+	go run cmd/sfflt_lang.go -format pretty test.sflt
 	$(FFLT_LANG) test.fflt
 
 deps:
