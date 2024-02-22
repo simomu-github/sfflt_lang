@@ -14,19 +14,18 @@ type Parser struct {
 	currentToken    token.Token
 	peekToken       token.Token
 	isFunction      bool
-	loopNestedCount int
+	nestedLoopCount int
 	stackTop        int
-	scopes          []map[string]argVariable
-	hasError        bool
+	scopes          []map[string]argumentVariable
 	Errors          []string
 }
 
-type argVariable struct {
+type argumentVariable struct {
 	argumentIndex int
 }
 
 func New(lexer *lexer.Lexer) *Parser {
-	p := &Parser{lexer: lexer, isFunction: false, Errors: []string{}, scopes: []map[string]argVariable{}}
+	p := &Parser{lexer: lexer, isFunction: false, Errors: []string{}, scopes: []map[string]argumentVariable{}}
 	p.nextToken()
 	p.nextToken()
 	return p
@@ -539,15 +538,15 @@ func (p *Parser) matchPeekToken(types ...token.TokenType) bool {
 }
 
 func (p *Parser) beginLoop() {
-	p.loopNestedCount++
+	p.nestedLoopCount++
 }
 
 func (p *Parser) endLoop() {
-	p.loopNestedCount--
+	p.nestedLoopCount--
 }
 
 func (p *Parser) isInLoop() bool {
-	return p.loopNestedCount >= 1
+	return p.nestedLoopCount >= 1
 }
 
 func (p *Parser) pushStack() {
@@ -559,7 +558,7 @@ func (p *Parser) popStack() {
 }
 
 func (p *Parser) beginScope() {
-	p.scopes = append(p.scopes, map[string]argVariable{})
+	p.scopes = append(p.scopes, map[string]argumentVariable{})
 }
 
 func (p *Parser) endScope() {
@@ -576,10 +575,10 @@ func (p *Parser) declareVariable(name token.Token, argumentIndex int) {
 		return
 	}
 
-	scope[name.Literal] = argVariable{argumentIndex: argumentIndex}
+	scope[name.Literal] = argumentVariable{argumentIndex: argumentIndex}
 }
 
-func (p *Parser) resolveLocal(name token.Token) *argVariable {
+func (p *Parser) resolveLocal(name token.Token) *argumentVariable {
 	for i := len(p.scopes) - 1; i >= 0; i-- {
 		if result, ok := p.scopes[i][name.Literal]; ok {
 			return &result
