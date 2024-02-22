@@ -8,14 +8,14 @@ import (
 )
 
 type Resolver struct {
-	filename         string
-	statements       []ast.Statement
-	definedFunctions map[string]definedFunction
-	calledFunctions  map[string]calledFunction
-	Errors           []string
+	filename          string
+	statements        []ast.Statement
+	declaredFunctions map[string]declaredFunction
+	calledFunctions   map[string]calledFunction
+	Errors            []string
 }
 
-type definedFunction struct {
+type declaredFunction struct {
 	name  token.Token
 	arity int
 }
@@ -27,11 +27,11 @@ type calledFunction struct {
 
 func NewResolver(filename string, statements []ast.Statement) *Resolver {
 	return &Resolver{
-		filename:         filename,
-		statements:       statements,
-		definedFunctions: map[string]definedFunction{},
-		calledFunctions:  map[string]calledFunction{},
-		Errors:           []string{},
+		filename:          filename,
+		statements:        statements,
+		declaredFunctions: map[string]declaredFunction{},
+		calledFunctions:   map[string]calledFunction{},
+		Errors:            []string{},
 	}
 }
 
@@ -45,7 +45,7 @@ func (r *Resolver) Resolve() {
 	}
 
 	for name, cf := range r.calledFunctions {
-		if df, ok := r.definedFunctions[name]; ok {
+		if df, ok := r.declaredFunctions[name]; ok {
 			if cf.arity != df.arity {
 				r.resolveError(
 					cf.name,
@@ -60,12 +60,12 @@ func (r *Resolver) Resolve() {
 
 func (r *Resolver) VisitVar(s ast.Var) { s.Expression.Visit(r) }
 func (r *Resolver) VisitFunction(s ast.Function) {
-	_, ok := r.definedFunctions[s.Name.Literal]
+	_, ok := r.declaredFunctions[s.Name.Literal]
 	if ok {
 		r.resolveError(s.Name, "function is already declared.")
 	}
 
-	r.definedFunctions[s.Name.Literal] = definedFunction{
+	r.declaredFunctions[s.Name.Literal] = declaredFunction{
 		name:  s.Name,
 		arity: len(s.Params),
 	}

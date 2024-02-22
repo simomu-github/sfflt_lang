@@ -8,23 +8,27 @@ import (
 )
 
 type Compiler struct {
-	statements          []ast.Statement
-	instructions        []string
-	functions           [][]string
-	labelIndex          int
-	isCompilingFunction bool
-	functionParamLength int
-	breakOffsets        [][]int
+	statements        []ast.Statement
+	instructions      instructions
+	functions         []instructions
+	compilingFunction *compilingFunction
+	labelIndex        int
+	breakPositions    [][]int
+}
+
+type instructions []string
+
+type compilingFunction struct {
+	ParamCount int
 }
 
 func New(statements []ast.Statement) *Compiler {
 	return &Compiler{
-		statements:          statements,
-		instructions:        []string{},
-		functions:           [][]string{},
-		labelIndex:          0,
-		isCompilingFunction: false,
-		breakOffsets:        [][]int{},
+		statements:     statements,
+		instructions:   instructions{},
+		functions:      []instructions{},
+		labelIndex:     0,
+		breakPositions: [][]int{},
 	}
 }
 
@@ -52,10 +56,9 @@ func (c *Compiler) VisitVar(s ast.Var) {
 }
 
 func (c *Compiler) VisitFunction(s ast.Function) {
-	c.isCompilingFunction = true
-	c.functionParamLength = len(s.Params)
+	c.compilingFunction = &compilingFunction{ParamCount: len(s.Params)}
+	c.functions = append(c.functions, instructions{})
 
-	c.functions = append(c.functions, []string{})
 	ident := stringToBinary("gf" + s.Name.Literal)
 	c.addInstructionWithParam(LABEL, ident)
 
@@ -69,7 +72,7 @@ func (c *Compiler) VisitFunction(s ast.Function) {
 	}
 	c.addInstruction(ENDSUB)
 
-	c.isCompilingFunction = false
+	c.compilingFunction = nil
 }
 
 func (c *Compiler) VisitPut(s ast.PutStatement) {
@@ -84,33 +87,34 @@ func (c *Compiler) VisitPut(s ast.PutStatement) {
 
 func (c *Compiler) VisitReturn(s ast.Return) {
 	s.Value.Visit(c)
-	if c.functionParamLength != 0 {
-		slideLength := intToBinary(int64(c.functionParamLength))
+	if c.compilingFunction.ParamCount != 0 {
+		slideLength := intToBinary(int64(c.compilingFunction.ParamCount))
 		c.addInstructionWithParam(SLIDE, POSI+slideLength)
 	}
 	c.addInstruction(ENDSUB)
 }
 
 func (c *Compiler) VisitBreak(s ast.Break) {
-	c.addBreak()
+	pos := c.reserveJumpLabel(JUMP)
+	c.breakPositions[len(c.breakPositions)-1] = append(c.breakPositions[len(c.breakPositions)-1], pos)
 }
 
 func (c *Compiler) VisitIf(s ast.If) {
 	s.Condition.Visit(c)
 
-	trueJumpOffset := c.reserveJumpLabel(JUMP_WHEN_ZERO)
+	trueJumpPos := c.reserveJumpLabel(JUMP_WHEN_ZERO)
 
 	s.Then.Visit(c)
-	endJumpOffset := c.reserveJumpLabel(JUMP)
+	endJumpPos := c.reserveJumpLabel(JUMP)
 
 	trueLabel := c.markJumpLabel()
-	c.confirmJumpLabel(trueJumpOffset, trueLabel)
+	c.confirmJumpLabel(trueJumpPos, trueLabel)
 	if s.Else != nil {
 		s.Else.Visit(c)
 	}
 
 	endLabel := c.markJumpLabel()
-	c.confirmJumpLabel(endJumpOffset, endLabel)
+	c.confirmJumpLabel(endJumpPos, endLabel)
 }
 
 func (c *Compiler) VisitWhile(s ast.While) {
@@ -118,18 +122,18 @@ func (c *Compiler) VisitWhile(s ast.While) {
 
 	trueJumpLabel := c.markJumpLabel()
 	s.Condition.Visit(c)
-	endJumpOffset := c.reserveJumpLabel(JUMP_WHEN_ZERO)
+	endJumpPos := c.reserveJumpLabel(JUMP_WHEN_ZERO)
 
 	s.Body.Visit(c)
 
-	trueJumpOffset := c.reserveJumpLabel(JUMP)
-	c.confirmJumpLabel(trueJumpOffset, trueJumpLabel)
+	trueJumpPos := c.reserveJumpLabel(JUMP)
+	c.confirmJumpLabel(trueJumpPos, trueJumpLabel)
 
 	endLabel := c.markJumpLabel()
-	c.confirmJumpLabel(endJumpOffset, endLabel)
-	breakOffsets := c.currentBreakOffsets()
-	for _, offset := range breakOffsets {
-		c.confirmJumpLabel(offset, endLabel)
+	c.confirmJumpLabel(endJumpPos, endLabel)
+	breakPositions := c.currentLoopBreakPositions()
+	for _, pos := range breakPositions {
+		c.confirmJumpLabel(pos, endLabel)
 	}
 
 	c.endLoop()
@@ -195,17 +199,17 @@ func (c *Compiler) VisitBinaryExpression(e ast.Binary) {
 func (c *Compiler) equality(e ast.Binary) {
 	c.addInstruction(SUB)
 
-	zeroJumpOffset := c.reserveJumpLabel(JUMP_WHEN_ZERO)
+	zeroJumpPos := c.reserveJumpLabel(JUMP_WHEN_ZERO)
 
 	if e.Operator.Type == token.EQ {
 		c.addInstructionWithParam(PUSH, ZERO)
 	} else {
 		c.addInstructionWithParam(PUSH, ONE)
 	}
-	endJumpOffset := c.reserveJumpLabel(JUMP)
+	endJumpPos := c.reserveJumpLabel(JUMP)
 
 	zeroLabel := c.markJumpLabel()
-	c.confirmJumpLabel(zeroJumpOffset, zeroLabel)
+	c.confirmJumpLabel(zeroJumpPos, zeroLabel)
 
 	if e.Operator.Type == token.EQ {
 		c.addInstructionWithParam(PUSH, ONE)
@@ -214,7 +218,7 @@ func (c *Compiler) equality(e ast.Binary) {
 	}
 
 	endLabel := c.markJumpLabel()
-	c.confirmJumpLabel(endJumpOffset, endLabel)
+	c.confirmJumpLabel(endJumpPos, endLabel)
 }
 
 func (c *Compiler) comparison(e ast.Binary) {
@@ -227,9 +231,9 @@ func (c *Compiler) comparison(e ast.Binary) {
 		c.addInstruction(DUP)
 	}
 
-	zeroJumpOffset := -1
+	zeroJumpPos := -1
 	if e.Operator.Type == token.LTEQ || e.Operator.Type == token.GTEQ {
-		zeroJumpOffset = c.reserveJumpLabel(JUMP_WHEN_ZERO)
+		zeroJumpPos = c.reserveJumpLabel(JUMP_WHEN_ZERO)
 	}
 
 	negativeJumpOffset := c.reserveJumpLabel(JUMP_WHEN_NEGA)
@@ -237,9 +241,9 @@ func (c *Compiler) comparison(e ast.Binary) {
 	c.addInstructionWithParam(PUSH, ZERO)
 	endJumpOffset := c.reserveJumpLabel(JUMP)
 
-	if zeroJumpOffset >= 0 {
+	if zeroJumpPos >= 0 {
 		zeroLabel := c.markJumpLabel()
-		c.confirmJumpLabel(zeroJumpOffset, zeroLabel)
+		c.confirmJumpLabel(zeroJumpPos, zeroLabel)
 		c.addInstruction(DISCARD)
 	}
 
@@ -252,45 +256,45 @@ func (c *Compiler) comparison(e ast.Binary) {
 }
 
 func (c *Compiler) and(e ast.Binary) {
-	lhsJumpOffset := c.reserveJumpLabel(JUMP_WHEN_ZERO)
+	lhsJumpPos := c.reserveJumpLabel(JUMP_WHEN_ZERO)
 
 	e.Right.Visit(c)
 
-	rhsJumpOffset := c.reserveJumpLabel(JUMP_WHEN_ZERO)
+	rhsJumpPos := c.reserveJumpLabel(JUMP_WHEN_ZERO)
 
 	c.addInstructionWithParam(PUSH, ONE)
-	endJumpOffset := c.reserveJumpLabel(JUMP)
+	endJumpPos := c.reserveJumpLabel(JUMP)
 
 	zeroLabel := c.markJumpLabel()
-	c.confirmJumpLabel(lhsJumpOffset, zeroLabel)
-	c.confirmJumpLabel(rhsJumpOffset, zeroLabel)
+	c.confirmJumpLabel(lhsJumpPos, zeroLabel)
+	c.confirmJumpLabel(rhsJumpPos, zeroLabel)
 	c.addInstructionWithParam(PUSH, ZERO)
 
 	endLabel := c.markJumpLabel()
-	c.confirmJumpLabel(endJumpOffset, endLabel)
+	c.confirmJumpLabel(endJumpPos, endLabel)
 }
 
 func (c *Compiler) or(e ast.Binary) {
-	lhsJumpZeroOffset := c.reserveJumpLabel(JUMP_WHEN_ZERO)
+	lhsJumpZeroPos := c.reserveJumpLabel(JUMP_WHEN_ZERO)
 	c.addInstructionWithParam(PUSH, ONE)
-	lhsJumpEndOffset := c.reserveJumpLabel(JUMP)
+	lhsJumpEndPos := c.reserveJumpLabel(JUMP)
 
 	lhsJumpZeroLabel := c.markJumpLabel()
-	c.confirmJumpLabel(lhsJumpZeroOffset, lhsJumpZeroLabel)
+	c.confirmJumpLabel(lhsJumpZeroPos, lhsJumpZeroLabel)
 	e.Right.Visit(c)
 
-	rhsJumpZeroOffset := c.reserveJumpLabel(JUMP_WHEN_ZERO)
+	rhsJumpZeroPos := c.reserveJumpLabel(JUMP_WHEN_ZERO)
 	c.addInstructionWithParam(PUSH, ONE)
-	rhsJumpEndOffset := c.reserveJumpLabel(JUMP)
+	rhsJumpEndPos := c.reserveJumpLabel(JUMP)
 
 	rhsJumpZeroLabel := c.markJumpLabel()
-	c.confirmJumpLabel(rhsJumpZeroOffset, rhsJumpZeroLabel)
+	c.confirmJumpLabel(rhsJumpZeroPos, rhsJumpZeroLabel)
 
 	c.addInstructionWithParam(PUSH, ZERO)
 
 	endLabel := c.markJumpLabel()
-	c.confirmJumpLabel(lhsJumpEndOffset, endLabel)
-	c.confirmJumpLabel(rhsJumpEndOffset, endLabel)
+	c.confirmJumpLabel(lhsJumpEndPos, endLabel)
+	c.confirmJumpLabel(rhsJumpEndPos, endLabel)
 }
 
 func (c *Compiler) VisitUnaryExpression(e ast.Unary) {
@@ -303,18 +307,18 @@ func (c *Compiler) VisitUnaryExpression(e ast.Unary) {
 
 	if e.Operator.Type == token.BANG {
 		e.Right.Visit(c)
-		zeroJumpOffset := c.reserveJumpLabel(JUMP_WHEN_ZERO)
+		zeroJumpPos := c.reserveJumpLabel(JUMP_WHEN_ZERO)
 
 		c.addInstructionWithParam(PUSH, ZERO)
-		endJumpOffset := c.reserveJumpLabel(JUMP)
+		endJumpPos := c.reserveJumpLabel(JUMP)
 
 		zeroLabel := c.markJumpLabel()
-		c.confirmJumpLabel(zeroJumpOffset, zeroLabel)
+		c.confirmJumpLabel(zeroJumpPos, zeroLabel)
 
 		c.addInstructionWithParam(PUSH, ONE)
 
 		endLabel := c.markJumpLabel()
-		c.confirmJumpLabel(endJumpOffset, endLabel)
+		c.confirmJumpLabel(endJumpPos, endLabel)
 		return
 	}
 
@@ -362,7 +366,7 @@ func (c *Compiler) VisitVariable(e ast.Variable) {
 }
 
 func (c *Compiler) argumentVariable(e ast.Variable) {
-	offset := c.functionParamLength - e.ArgumentIndex + e.RelativeIndex
+	offset := c.compilingFunction.ParamCount - e.ArgumentIndex + e.RelativeIndex
 	param := intToBinary(int64(offset))
 	c.addInstructionWithParam(COPY, POSI+param)
 }
@@ -387,7 +391,7 @@ func (c *Compiler) VisitGet(s ast.Get) {
 }
 
 func (c *Compiler) addInstruction(instruction InstructionType) {
-	if c.isCompilingFunction {
+	if c.isCompilingFunction() {
 		idx := len(c.functions) - 1
 		c.functions[idx] = append(c.functions[idx], string(instruction))
 	} else {
@@ -396,7 +400,7 @@ func (c *Compiler) addInstruction(instruction InstructionType) {
 }
 
 func (c *Compiler) addInstructionWithParam(instruction InstructionType, param string) {
-	if c.isCompilingFunction {
+	if c.isCompilingFunction() {
 		idx := len(c.functions) - 1
 		c.functions[idx] = append(c.functions[idx], string(instruction)+param+"T")
 	} else {
@@ -419,12 +423,12 @@ func (c *Compiler) markJumpLabel() string {
 	return labelPrefix + label
 }
 
-func (c *Compiler) confirmJumpLabel(offset int, label string) {
-	c.currentInstructions()[offset] = strings.Replace(c.currentInstructions()[offset], "?", label, 1)
+func (c *Compiler) confirmJumpLabel(pos int, label string) {
+	c.currentInstructions()[pos] = strings.Replace(c.currentInstructions()[pos], "?", label, 1)
 }
 
 func (c *Compiler) currentInstructions() []string {
-	if !c.isCompilingFunction {
+	if !c.isCompilingFunction() {
 		return c.instructions
 	}
 
@@ -432,21 +436,20 @@ func (c *Compiler) currentInstructions() []string {
 	return c.functions[idx]
 }
 
+func (c *Compiler) isCompilingFunction() bool {
+	return c.compilingFunction != nil
+}
+
 func (c *Compiler) beginLoop() {
-	c.breakOffsets = append(c.breakOffsets, []int{})
+	c.breakPositions = append(c.breakPositions, []int{})
 }
 
-func (c *Compiler) addBreak() {
-	offset := c.reserveJumpLabel(JUMP)
-	c.breakOffsets[len(c.breakOffsets)-1] = append(c.breakOffsets[len(c.breakOffsets)-1], offset)
-}
-
-func (c *Compiler) currentBreakOffsets() []int {
-	return c.breakOffsets[len(c.breakOffsets)-1]
+func (c *Compiler) currentLoopBreakPositions() []int {
+	return c.breakPositions[len(c.breakPositions)-1]
 }
 
 func (c *Compiler) endLoop() {
-	c.breakOffsets = c.breakOffsets[:len(c.breakOffsets)-1]
+	c.breakPositions = c.breakPositions[:len(c.breakPositions)-1]
 }
 
 func stringToBinary(ident string) string {
