@@ -9,12 +9,7 @@ import (
 
 func TestCompilePrimary(t *testing.T) {
 	input := "0; 10; 'a'; true; false; getn;"
-	lexer := lexer.New("script", input)
-	parser := parser.New(lexer)
-	exprs := parser.ParseProgram()
-	compiler := New(exprs)
-
-	instructions := compiler.Compile()
+	instructions := compile(input, t)
 	expects := []string{
 		"FFFFT",
 		"FTT",
@@ -33,21 +28,12 @@ func TestCompilePrimary(t *testing.T) {
 		"FTT",
 	}
 
-	for i, expect := range expects {
-		if instructions[i] != expect {
-			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, instructions[i])
-		}
-	}
+	assertInstructions(instructions, expects, t)
 }
 
 func TestCompileBang(t *testing.T) {
 	input := "!true;"
-	lexer := lexer.New("script", input)
-	parser := parser.New(lexer)
-	exprs := parser.ParseProgram()
-	compiler := New(exprs)
-
-	instructions := compiler.Compile()
+	instructions := compile(input, t)
 	expects := []string{
 		"FFFLT",        // push 1
 		"TLFLLFLLFFFT", // jump label when zero
@@ -59,21 +45,12 @@ func TestCompileBang(t *testing.T) {
 		"FTT",          // discard
 	}
 
-	for i, expect := range expects {
-		if instructions[i] != expect {
-			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, instructions[i])
-		}
-	}
+	assertInstructions(instructions, expects, t)
 }
 
 func TestCompileCall(t *testing.T) {
 	input := "a(1, 2, 3);"
-	lexer := lexer.New("script", input)
-	parser := parser.New(lexer)
-	exprs := parser.ParseProgram()
-	compiler := New(exprs)
-
-	instructions := compiler.Compile()
+	instructions := compile(input, t)
 	expects := []string{
 		"FFFLT",                     // push 1
 		"FFFLFT",                    // push 2
@@ -81,21 +58,12 @@ func TestCompileCall(t *testing.T) {
 		"TFLLLFFLLLLLFFLLFLLFFFFLT", // call sub
 	}
 
-	for i, expect := range expects {
-		if instructions[i] != expect {
-			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, instructions[i])
-		}
-	}
+	assertInstructions(instructions, expects, t)
 }
 
 func TestCompileUnary(t *testing.T) {
 	input := "-10;"
-	lexer := lexer.New("script", input)
-	parser := parser.New(lexer)
-	exprs := parser.ParseProgram()
-	compiler := New(exprs)
-
-	instructions := compiler.Compile()
+	instructions := compile(input, t)
 	expects := []string{
 		"FFLLT",
 		"FFFLFLFT",
@@ -103,21 +71,12 @@ func TestCompileUnary(t *testing.T) {
 		"FTT",
 	}
 
-	for i, expect := range expects {
-		if instructions[i] != expect {
-			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, instructions[i])
-		}
-	}
+	assertInstructions(instructions, expects, t)
 }
 
 func TestCompileFactor(t *testing.T) {
 	input := "2 * -3;"
-	lexer := lexer.New("script", input)
-	parser := parser.New(lexer)
-	exprs := parser.ParseProgram()
-	compiler := New(exprs)
-
-	instructions := compiler.Compile()
+	instructions := compile(input, t)
 	expects := []string{
 		"FFFLFT",
 		"FFLLT",
@@ -127,21 +86,12 @@ func TestCompileFactor(t *testing.T) {
 		"FTT",
 	}
 
-	for i, expect := range expects {
-		if instructions[i] != expect {
-			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, instructions[i])
-		}
-	}
+	assertInstructions(instructions, expects, t)
 }
 
 func TestCompileTerm(t *testing.T) {
 	input := "(4 - 3) * (2 + 1);"
-	lexer := lexer.New("script", input)
-	parser := parser.New(lexer)
-	exprs := parser.ParseProgram()
-	compiler := New(exprs)
-
-	instructions := compiler.Compile()
+	instructions := compile(input, t)
 	expects := []string{
 		"FFFLFFT",
 		"FFFLLT",
@@ -153,21 +103,12 @@ func TestCompileTerm(t *testing.T) {
 		"FTT",
 	}
 
-	for i, expect := range expects {
-		if instructions[i] != expect {
-			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, instructions[i])
-		}
-	}
+	assertInstructions(instructions, expects, t)
 }
 
 func TestCompileComparison(t *testing.T) {
 	input := "1 > 2;"
-	lexer := lexer.New("script", input)
-	parser := parser.New(lexer)
-	exprs := parser.ParseProgram()
-	compiler := New(exprs)
-
-	instructions := compiler.Compile()
+	instructions := compile(input, t)
 	expects := []string{
 		"FFFLT",        // push 1
 		"FFFLFT",       // push 2
@@ -181,21 +122,12 @@ func TestCompileComparison(t *testing.T) {
 		"TFFLLFLLFFLT", // mark label
 	}
 
-	for i, expect := range expects {
-		if instructions[i] != expect {
-			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, instructions[i])
-		}
-	}
+	assertInstructions(instructions, expects, t)
 }
 
 func TestCompileComparisonWithEqual(t *testing.T) {
 	input := "1 >= 2;"
-	lexer := lexer.New("script", input)
-	parser := parser.New(lexer)
-	exprs := parser.ParseProgram()
-	compiler := New(exprs)
-
-	instructions := compiler.Compile()
+	instructions := compile(input, t)
 	expects := []string{
 		"FFFLT",         // push lhs
 		"FFFLFT",        // push rhs
@@ -213,21 +145,12 @@ func TestCompileComparisonWithEqual(t *testing.T) {
 		"TFFLLFLLFFLFT", // mark label end
 	}
 
-	for i, expect := range expects {
-		if instructions[i] != expect {
-			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, instructions[i])
-		}
-	}
+	assertInstructions(instructions, expects, t)
 }
 
 func TestCompileEquality(t *testing.T) {
 	input := "1 != 2;"
-	lexer := lexer.New("script", input)
-	parser := parser.New(lexer)
-	exprs := parser.ParseProgram()
-	compiler := New(exprs)
-
-	instructions := compiler.Compile()
+	instructions := compile(input, t)
 	expects := []string{
 		"FFFLT",        // push lhs
 		"FFFLFT",       // push rhs
@@ -241,21 +164,12 @@ func TestCompileEquality(t *testing.T) {
 		"FTT",          // discard
 	}
 
-	for i, expect := range expects {
-		if instructions[i] != expect {
-			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, instructions[i])
-		}
-	}
+	assertInstructions(instructions, expects, t)
 }
 
 func TestCompileAnd(t *testing.T) {
 	input := "true && false;"
-	lexer := lexer.New("script", input)
-	parser := parser.New(lexer)
-	exprs := parser.ParseProgram()
-	compiler := New(exprs)
-
-	instructions := compiler.Compile()
+	instructions := compile(input, t)
 	expects := []string{
 		"FFFLT",        // push lhs
 		"TLFLLFLLFFFT", // jump label when zero
@@ -269,21 +183,12 @@ func TestCompileAnd(t *testing.T) {
 		"FTT",          // discard
 	}
 
-	for i, expect := range expects {
-		if instructions[i] != expect {
-			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, instructions[i])
-		}
-	}
+	assertInstructions(instructions, expects, t)
 }
 
 func TestCompileOr(t *testing.T) {
 	input := "true || false;"
-	lexer := lexer.New("script", input)
-	parser := parser.New(lexer)
-	exprs := parser.ParseProgram()
-	compiler := New(exprs)
-
-	instructions := compiler.Compile()
+	instructions := compile(input, t)
 	expects := []string{
 		"FFFLT",         // push lhs
 		"TLFLLFLLFFFT",  // jump label when zero
@@ -302,21 +207,12 @@ func TestCompileOr(t *testing.T) {
 		"FTT",           // discard
 	}
 
-	for i, expect := range expects {
-		if instructions[i] != expect {
-			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, instructions[i])
-		}
-	}
+	assertInstructions(instructions, expects, t)
 }
 
 func TestCompileAssign(t *testing.T) {
 	input := "var a = 1; a = 2;"
-	lexer := lexer.New("script", input)
-	parser := parser.New(lexer)
-	exprs := parser.ParseProgram()
-	compiler := New(exprs)
-
-	instructions := compiler.Compile()
+	instructions := compile(input, t)
 	expects := []string{
 		"FFFLLFFLLLLLLFLLFLLFFFFLT",
 		"FFFLT",
@@ -330,21 +226,12 @@ func TestCompileAssign(t *testing.T) {
 		"FTT",
 	}
 
-	for i, expect := range expects {
-		if instructions[i] != expect {
-			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, instructions[i])
-		}
-	}
+	assertInstructions(instructions, expects, t)
 }
 
 func TestCompilePut(t *testing.T) {
 	input := "putn -1; putc 'a';"
-	lexer := lexer.New("script", input)
-	parser := parser.New(lexer)
-	exprs := parser.ParseProgram()
-	compiler := New(exprs)
-
-	instructions := compiler.Compile()
+	instructions := compile(input, t)
 	expects := []string{
 		"FFLLT",
 		"FFFLT",
@@ -354,21 +241,12 @@ func TestCompilePut(t *testing.T) {
 		"LTFF",
 	}
 
-	for i, expect := range expects {
-		if instructions[i] != expect {
-			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, instructions[i])
-		}
-	}
+	assertInstructions(instructions, expects, t)
 }
 
 func TestCompileIf(t *testing.T) {
 	input := "if (true) { 1; } else { 2;}"
-	lexer := lexer.New("script", input)
-	parser := parser.New(lexer)
-	exprs := parser.ParseProgram()
-	compiler := New(exprs)
-
-	instructions := compiler.Compile()
+	instructions := compile(input, t)
 	expects := []string{
 		"FFFLT",        // condition
 		"TLFLLFLLFFFT", // jump label when zero
@@ -381,21 +259,12 @@ func TestCompileIf(t *testing.T) {
 		"TFFLLFLLFFLT", //mark label end
 	}
 
-	for i, expect := range expects {
-		if instructions[i] != expect {
-			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, instructions[i])
-		}
-	}
+	assertInstructions(instructions, expects, t)
 }
 
 func TestCompileWhile(t *testing.T) {
 	input := "while (true) true;"
-	lexer := lexer.New("script", input)
-	parser := parser.New(lexer)
-	exprs := parser.ParseProgram()
-	compiler := New(exprs)
-
-	instructions := compiler.Compile()
+	instructions := compile(input, t)
 	expects := []string{
 		"TFFLLFLLFFFT", // mark label loop
 		"FFFLT",        // condition
@@ -406,21 +275,12 @@ func TestCompileWhile(t *testing.T) {
 		"TFFLLFLLFFLT", // mark label zero
 	}
 
-	for i, expect := range expects {
-		if instructions[i] != expect {
-			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, instructions[i])
-		}
-	}
+	assertInstructions(instructions, expects, t)
 }
 
 func TestCompileGlobalVariable(t *testing.T) {
 	input := "var a = 1; a;"
-	lexer := lexer.New("script", input)
-	parser := parser.New(lexer)
-	exprs := parser.ParseProgram()
-	compiler := New(exprs)
-
-	instructions := compiler.Compile()
+	instructions := compile(input, t)
 	expects := []string{
 		"FFFLLFFLLLLLLFLLFLLFFFFLT",
 		"FFFLT",
@@ -430,21 +290,12 @@ func TestCompileGlobalVariable(t *testing.T) {
 		"FTT",
 	}
 
-	for i, expect := range expects {
-		if instructions[i] != expect {
-			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, instructions[i])
-		}
-	}
+	assertInstructions(instructions, expects, t)
 }
 
 func TestCompileArgumentVariable(t *testing.T) {
 	input := "func f(a, b, c) { a + c; }"
-	lexer := lexer.New("script", input)
-	parser := parser.New(lexer)
-	exprs := parser.ParseProgram()
-	compiler := New(exprs)
-
-	instructions := compiler.Compile()
+	instructions := compile(input, t)
 	expects := []string{
 		"TTT",
 		"TFFLLFFLLLLLFFLLFLLFFLLFT",
@@ -457,21 +308,12 @@ func TestCompileArgumentVariable(t *testing.T) {
 		"TLT",     // end sub
 	}
 
-	for i, expect := range expects {
-		if instructions[i] != expect {
-			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, instructions[i])
-		}
-	}
+	assertInstructions(instructions, expects, t)
 }
 
 func TestCompileFunction(t *testing.T) {
 	input := "func a() { 1;} a();"
-	lexer := lexer.New("script", input)
-	parser := parser.New(lexer)
-	exprs := parser.ParseProgram()
-	compiler := New(exprs)
-
-	instructions := compiler.Compile()
+	instructions := compile(input, t)
 	expects := []string{
 		"TFLLLFFLLLLLFFLLFLLFFFFLT",
 		"FTT",
@@ -483,11 +325,7 @@ func TestCompileFunction(t *testing.T) {
 		"TLT",
 	}
 
-	for i, expect := range expects {
-		if instructions[i] != expect {
-			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, instructions[i])
-		}
-	}
+	assertInstructions(instructions, expects, t)
 }
 
 func TestCompileReturn(t *testing.T) {
@@ -509,21 +347,12 @@ func TestCompileReturn(t *testing.T) {
 		"TLT",
 	}
 
-	for i, expect := range expects {
-		if instructions[i] != expect {
-			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, instructions[i])
-		}
-	}
+	assertInstructions(instructions, expects, t)
 }
 
 func TestCompileBreak(t *testing.T) {
 	input := "while(true) { while(true) { break; } break; }"
-	lexer := lexer.New("script", input)
-	parser := parser.New(lexer)
-	exprs := parser.ParseProgram()
-	compiler := New(exprs)
-
-	instructions := compiler.Compile()
+	instructions := compile(input, t)
 	expects := []string{
 		// outer while
 		"TFFLLFLLFFFT",  // mark label loop
@@ -544,9 +373,28 @@ func TestCompileBreak(t *testing.T) {
 		"TFFLLFLLFFLLT", // mark label zero
 	}
 
+	assertInstructions(instructions, expects, t)
+}
+
+func compile(input string, t *testing.T) []string {
+	lexer := lexer.New("script", input)
+	parser := parser.New(lexer)
+	if parser.HadErrors() {
+		t.Fatalf("Parse error occurred.")
+	}
+	exprs := parser.ParseProgram()
+	compiler := New(exprs)
+
+	return compiler.Compile()
+}
+
+func assertInstructions(actuals []string, expects []string, t *testing.T) {
 	for i, expect := range expects {
-		if instructions[i] != expect {
-			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, instructions[i])
+		if len(actuals) <= i {
+			t.Fatalf("tests[%d] - expected instruction does not exists. expected=%q", i, expect)
+		}
+		if actuals[i] != expect {
+			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, actuals[i])
 		}
 	}
 }
