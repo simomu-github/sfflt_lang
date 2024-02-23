@@ -173,7 +173,7 @@ func (c *Compiler) VisitBinaryExpression(e ast.Binary) {
 	case token.ASTERISK:
 		instruction = MUL
 	case token.SLASH:
-		instruction = SUB
+		instruction = DIV
 	case token.MOD:
 		instruction = MOD
 	case token.LT, token.LTEQ, token.GT, token.GTEQ:

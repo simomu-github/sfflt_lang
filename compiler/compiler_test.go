@@ -75,14 +75,18 @@ func TestCompileUnary(t *testing.T) {
 }
 
 func TestCompileFactor(t *testing.T) {
-	input := "2 * -3;"
+	input := "1 / 2 * -3 % 4;"
 	instructions := compile(input, t)
 	expects := []string{
-		"FFFLFT",
-		"FFLLT",
-		"FFFLLT",
-		"LFFT",
-		"LFFT",
+		"FFFLT",   // push 1
+		"FFFLFT",  // push 2
+		"LFLF",    // div
+		"FFLLT",   // push -1
+		"FFFLLT",  // push 3
+		"LFFT",    // mul
+		"LFFT",    // mul
+		"FFFLFFT", // push 4
+		"LFLL",    // mod 4
 		"FTT",
 	}
 
