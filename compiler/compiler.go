@@ -157,8 +157,10 @@ func (c *Compiler) VisitAssign(s ast.Assign) {
 
 	c.addInstruction(DISCARD)
 
-	c.addInstructionWithParam(PUSH, POSI+ident)
 	s.Expression.Visit(c)
+	c.addInstruction(DUP)
+	c.addInstructionWithParam(PUSH, POSI+ident)
+	c.addInstruction(SWAP)
 	c.addInstruction(STORE)
 }
 

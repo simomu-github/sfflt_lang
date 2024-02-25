@@ -321,7 +321,7 @@ func (p *Parser) parseAssign() ast.Expression {
 	case token.ASSIGN:
 		p.nextToken()
 		p.nextToken()
-		right := p.parseOr()
+		right := p.parseAssign()
 		variable, ok := expr.(ast.Variable)
 		if !ok {
 			p.parseError(p.currentToken, "Invalid assignment target.")

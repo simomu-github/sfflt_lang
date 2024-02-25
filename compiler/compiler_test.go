@@ -218,16 +218,19 @@ func TestCompileAssign(t *testing.T) {
 	input := "var a = 1; a = 2;"
 	instructions := compile(input, t)
 	expects := []string{
-		"FFFLLFFLLLLLLFLLFLLFFFFLT",
-		"FFFLT",
-		"LLF",
-		"FFFLLFFLLLLLLFLLFLLFFFFLT",
-		"LLL",
-		"FTT",
-		"FFFLLFFLLLLLLFLLFLLFFFFLT",
-		"FFFLFT",
-		"LLF",
-		"FTT",
+		"FFFLLFFLLLLLLFLLFLLFFFFLT", // push "a" address
+		"FFFLT",                     // push 1
+		"LLF",                       // store
+
+		"FFFLLFFLLLLLLFLLFLLFFFFLT", // push "a" address
+		"LLL",                       // retrieve
+		"FTT",                       // discard
+		"FFFLFT",                    // push 2
+		"FTF",                       // dup
+		"FFFLLFFLLLLLLFLLFLLFFFFLT", // push "a" address
+		"FTL",                       // swap
+		"LLF",                       // store
+		"FTT",                       // discard
 	}
 
 	assertInstructions(instructions, expects, t)

@@ -546,7 +546,7 @@ func TestParseBreak(t *testing.T) {
 }
 
 func TestParseAssign(t *testing.T) {
-	input := "a = 2"
+	input := "a = b = 2"
 	lexer := lexer.New("script", input)
 	parser := New(lexer)
 	expr := parser.parseExpression()
@@ -561,11 +561,21 @@ func TestParseAssign(t *testing.T) {
 		t.Fatalf("Target literal is not match")
 	}
 
-	right, ok := assign.Expression.(ast.IntegerLiteral)
+	right, ok := assign.Expression.(ast.Assign)
+	if !ok {
+		t.Fatalf("assign expression it not assign")
+	}
+
+	target = right.Target
+	if target.Literal != "b" {
+		t.Fatalf("Target literal is not match")
+	}
+
+	rr, ok := right.Expression.(ast.IntegerLiteral)
 	if !ok {
 		t.Fatalf("assign expression is not IntegerLiteral")
 	}
-	if right.Value != 2 {
+	if rr.Value != 2 {
 		t.Fatalf("assign value is not match")
 	}
 }
