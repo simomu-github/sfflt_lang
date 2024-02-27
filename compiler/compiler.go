@@ -49,10 +49,19 @@ func (c *Compiler) Compile() []string {
 }
 
 func (c *Compiler) VisitVar(s ast.Var) {
-	ident := stringToBinary("gv" + s.Identifier.Literal)
-	c.addInstructionWithParam(PUSH, POSI+ident)
-	s.Expression.Visit(c)
-	c.addInstruction(STORE)
+	if s.IsLocal {
+		address := (s.ScopeDepth << 8) + s.LocalIndex
+		param := intToBinary(int64(address))
+		prefix := stringToBinary("lv")
+		c.addInstructionWithParam(PUSH, POSI+prefix+param)
+		s.Expression.Visit(c)
+		c.addInstruction(STORE)
+	} else {
+		ident := stringToBinary("gv" + s.Identifier.Literal)
+		c.addInstructionWithParam(PUSH, POSI+ident)
+		s.Expression.Visit(c)
+		c.addInstruction(STORE)
+	}
 }
 
 func (c *Compiler) VisitFunction(s ast.Function) {
@@ -151,15 +160,23 @@ func (c *Compiler) VisitExpression(s ast.ExpressionStatement) {
 }
 
 func (c *Compiler) VisitAssign(s ast.Assign) {
-	ident := stringToBinary("gv" + s.Target.Literal)
-	c.addInstructionWithParam(PUSH, POSI+ident)
+	var address string
+	if s.Target.Type == ast.LOCAL {
+		ads := (s.Target.ScopeDepth << 8) + s.Target.LocalIndex
+		param := intToBinary(int64(ads))
+		prefix := stringToBinary("lv")
+		address = prefix + param
+	} else {
+		address = stringToBinary("gv" + s.Target.Identifier.Literal)
+	}
+	c.addInstructionWithParam(PUSH, POSI+address)
 	c.addInstruction(RETRIEVE)
 
 	c.addInstruction(DISCARD)
 
 	s.Expression.Visit(c)
 	c.addInstruction(DUP)
-	c.addInstructionWithParam(PUSH, POSI+ident)
+	c.addInstructionWithParam(PUSH, POSI+address)
 	c.addInstruction(SWAP)
 	c.addInstruction(STORE)
 }
@@ -360,8 +377,10 @@ func (c *Compiler) VisitBooleanLiteral(e ast.BooleanLiteral) {
 }
 
 func (c *Compiler) VisitVariable(e ast.Variable) {
-	if e.IsArgument {
+	if e.Type == ast.ARGUMENT {
 		c.argumentVariable(e)
+	} else if e.Type == ast.LOCAL {
+		c.localVariable(e)
 	} else {
 		c.globalVariable(e)
 	}
@@ -371,6 +390,14 @@ func (c *Compiler) argumentVariable(e ast.Variable) {
 	offset := c.compilingFunction.ParamCount - e.ArgumentIndex + e.RelativeIndex
 	param := intToBinary(int64(offset))
 	c.addInstructionWithParam(COPY, POSI+param)
+}
+
+func (c *Compiler) localVariable(e ast.Variable) {
+	address := (e.ScopeDepth << 8) + e.LocalIndex
+	param := intToBinary(int64(address))
+	prefix := stringToBinary("lv")
+	c.addInstructionWithParam(PUSH, POSI+prefix+param)
+	c.addInstruction(RETRIEVE)
 }
 
 func (c *Compiler) globalVariable(e ast.Variable) {

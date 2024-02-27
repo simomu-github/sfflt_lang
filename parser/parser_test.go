@@ -120,7 +120,7 @@ func TestParseArgumentVariable(t *testing.T) {
 
 	v := b.Right.(ast.Variable)
 
-	if !v.IsArgument {
+	if v.Type != ast.ARGUMENT {
 		t.Fatalf("Variale is not argument")
 	}
 
@@ -130,6 +130,77 @@ func TestParseArgumentVariable(t *testing.T) {
 
 	if v.RelativeIndex != 1 {
 		t.Fatalf("Relative index is not match")
+	}
+}
+
+func TestParseLocalVariable(t *testing.T) {
+	input := "{ var a = 0; { var a = 1; a; } a; }"
+	lexer := lexer.New("script", input)
+	parser := New(lexer)
+	stmt := parser.ParseProgram()
+
+	block, ok := stmt[0].(ast.Block)
+	if !ok {
+		t.Fatalf("Statement is not block")
+	}
+
+	v, ok := block.Statements[0].(ast.Var)
+	if !ok {
+		t.Fatalf("Body is not ExpressionStatement")
+	}
+
+	if v.Identifier.Literal != "a" {
+		t.Fatalf("Declared variable name is not match")
+	}
+
+	block2, ok := block.Statements[1].(ast.Block)
+	if !ok {
+		t.Fatalf("Statement is not block")
+	}
+
+	v2, ok := block2.Statements[0].(ast.Var)
+	if !ok {
+		t.Fatalf("Body is not ExpressionStatement")
+	}
+
+	if v2.Identifier.Literal != "a" {
+		t.Fatalf("Declared variable name is not match")
+	}
+
+	e1 := block2.Statements[1].(ast.ExpressionStatement)
+	variable1 := e1.Expression.(ast.Variable)
+	if !ok {
+		t.Fatalf("Not Variable")
+	}
+
+	if variable1.Identifier.Literal != "a" {
+		t.Fatalf("Identifier literal is not match")
+	}
+
+	if variable1.ScopeDepth != 2 {
+		t.Fatalf("Variable scope depth is not match")
+	}
+
+	if variable1.LocalIndex != 0 {
+		t.Fatalf("Variable local index is not match")
+	}
+
+	e := block.Statements[2].(ast.ExpressionStatement)
+	variable := e.Expression.(ast.Variable)
+	if !ok {
+		t.Fatalf("Not Variable")
+	}
+
+	if variable.Identifier.Literal != "a" {
+		t.Fatalf("Identifier literal is not match")
+	}
+
+	if variable.ScopeDepth != 1 {
+		t.Fatalf("Variable scope depth is not match")
+	}
+
+	if variable.LocalIndex != 0 {
+		t.Fatalf("Variable local index is not match")
 	}
 }
 
@@ -557,7 +628,7 @@ func TestParseAssign(t *testing.T) {
 	}
 
 	target := assign.Target
-	if target.Literal != "a" {
+	if target.Identifier.Literal != "a" {
 		t.Fatalf("Target literal is not match")
 	}
 
@@ -567,7 +638,7 @@ func TestParseAssign(t *testing.T) {
 	}
 
 	target = right.Target
-	if target.Literal != "b" {
+	if target.Identifier.Literal != "b" {
 		t.Fatalf("Target literal is not match")
 	}
 

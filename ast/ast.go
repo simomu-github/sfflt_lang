@@ -20,6 +20,9 @@ type StatementVisitor interface {
 
 type Var struct {
 	Identifier token.Token
+	IsLocal    bool
+	ScopeDepth int
+	LocalIndex int
 	Expression Expression
 }
 
@@ -114,7 +117,7 @@ type ExpressionVisitor interface {
 }
 
 type Assign struct {
-	Target     token.Token
+	Target     Variable
 	Expression Expression
 }
 
@@ -179,10 +182,19 @@ func (l BooleanLiteral) Visit(visitor ExpressionVisitor) {
 
 type Variable struct {
 	Identifier    token.Token
-	IsArgument    bool
+	Type          VariableType
+	ScopeDepth    int
+	LocalIndex    int
 	ArgumentIndex int
 	RelativeIndex int
 }
+
+const (
+	LOCAL    = "LOCAL"
+	ARGUMENT = "ARGUMENT"
+)
+
+type VariableType string
 
 func (v Variable) Visit(visitor ExpressionVisitor) {
 	visitor.VisitVariable(v)
