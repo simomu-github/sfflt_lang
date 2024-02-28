@@ -98,12 +98,12 @@ func TestParsePrimary(t *testing.T) {
 }
 
 func TestParseArgumentVariable(t *testing.T) {
-	input := "var a = 0; f(a, 1, 2); func f(a, b, c) { 1 + b; }"
+	input := "var a = 0; a = 0; f(a, 1, 2); func f(a, b, c) { 1 + b; }"
 	lexer := lexer.New("script", input)
 	parser := New(lexer)
 	stmt := parser.ParseProgram()
 
-	f, ok := stmt[2].(ast.Function)
+	f, ok := stmt[3].(ast.Function)
 	if !ok {
 		t.Fatalf("Statement is not function")
 	}
