@@ -518,6 +518,7 @@ func (p *Parser) parseVariable() ast.Expression {
 			}
 		}
 	}
+	p.pushStack()
 	return ast.Variable{Identifier: p.currentToken}
 }
 
