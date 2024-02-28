@@ -331,6 +331,7 @@ func (p *Parser) parseAssign() ast.Expression {
 			p.parseError(p.currentToken, "Can not assign to argument variable.")
 			return nil
 		}
+		p.popStack()
 		return ast.Assign{Target: variable.Identifier, Expression: right}
 	}
 
