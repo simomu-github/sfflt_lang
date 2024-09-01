@@ -114,6 +114,12 @@ func (r *Resolver) VisitBooleanLiteral(e ast.BooleanLiteral) {}
 func (r *Resolver) VisitVariable(e ast.Variable)             {}
 func (r *Resolver) VisitGet(e ast.Get)                       {}
 
+func (r *Resolver) VisitArrayLiteral(e ast.ArrayLiteral) {
+	for _, element := range e.Elements {
+		element.Visit(r)
+	}
+}
+
 func (r *Resolver) HadErrors() bool {
 	return len(r.Errors) != 0
 }

@@ -514,6 +514,8 @@ func (p *Parser) parsePrimary() ast.Expression {
 	case token.TRUE, token.FALSE:
 		p.pushStack()
 		return ast.BooleanLiteral{Token: p.currentToken, Value: p.currentToken.Type == token.TRUE}
+	case token.LBRACKET:
+		return p.parseArrayLiteral()
 	case token.LPAREN:
 		p.nextToken()
 		expr := p.parseExpression()
@@ -558,6 +560,32 @@ func (p *Parser) parseVariable() ast.Expression {
 	p.pushStack()
 
 	return ast.Variable{Identifier: p.currentToken}
+}
+
+func (p *Parser) parseArrayLiteral() ast.Expression {
+	p.nextToken()
+
+	elements := []ast.Expression{}
+	if p.currentToken.Type != token.RPAREN {
+		for {
+			elements = append(elements, p.parseExpression())
+
+			p.nextToken()
+			if p.currentToken.Type == token.COMMA {
+				p.nextToken()
+			} else {
+				break
+			}
+		}
+	}
+
+	if p.currentToken.Type != token.RBRACKET {
+		p.parseError(p.currentToken, "Expect ']' after array literal.")
+		return nil
+	}
+
+	p.pushStack()
+	return ast.ArrayLiteral{Elements: elements}
 }
 
 func (p *Parser) nextToken() {

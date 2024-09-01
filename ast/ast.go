@@ -113,6 +113,7 @@ type ExpressionVisitor interface {
 	VisitCharLiteral(e CharLiteral)
 	VisitBooleanLiteral(e BooleanLiteral)
 	VisitVariable(e Variable)
+	VisitArrayLiteral(e ArrayLiteral)
 	VisitGet(e Get)
 }
 
@@ -198,6 +199,14 @@ type VariableType string
 
 func (v Variable) Visit(visitor ExpressionVisitor) {
 	visitor.VisitVariable(v)
+}
+
+type ArrayLiteral struct {
+	Elements []Expression
+}
+
+func (a ArrayLiteral) Visit(visitor ExpressionVisitor) {
+	visitor.VisitArrayLiteral(a)
 }
 
 type Get struct {
