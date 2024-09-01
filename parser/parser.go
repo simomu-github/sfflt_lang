@@ -464,7 +464,28 @@ func (p *Parser) parseUnary() ast.Expression {
 		return ast.Unary{Operator: operator, Right: p.parseCall()}
 	}
 
-	return p.parseCall()
+	return p.parseIndex()
+}
+
+func (p *Parser) parseIndex() ast.Expression {
+	expr := p.parseCall()
+	if p.matchPeekToken(token.LBRACKET) {
+		p.nextToken()
+		p.nextToken()
+
+		index := p.parseExpression()
+		p.nextToken()
+
+		if p.currentToken.Type != token.RBRACKET {
+			p.parseError(p.currentToken, "Expect ']' after index.")
+			return nil
+		}
+
+		expr = ast.Index{Receiver: expr, Index: index}
+		p.pushStack()
+	}
+
+	return expr
 }
 
 func (p *Parser) parseCall() ast.Expression {

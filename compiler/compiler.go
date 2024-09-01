@@ -434,6 +434,9 @@ func (c *Compiler) VisitGet(s ast.Get) {
 func (c *Compiler) VisitArrayLiteral(e ast.ArrayLiteral) {
 }
 
+func (c *Compiler) VisitIndex(e ast.Index) {
+}
+
 func (c *Compiler) addInstruction(instruction InstructionType) {
 	if c.isCompilingFunction() {
 		idx := len(c.functions) - 1

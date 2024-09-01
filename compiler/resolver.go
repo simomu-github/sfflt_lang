@@ -120,6 +120,11 @@ func (r *Resolver) VisitArrayLiteral(e ast.ArrayLiteral) {
 	}
 }
 
+func (r *Resolver) VisitIndex(e ast.Index) {
+	e.Receiver.Visit(r)
+	e.Index.Visit(r)
+}
+
 func (r *Resolver) HadErrors() bool {
 	return len(r.Errors) != 0
 }
