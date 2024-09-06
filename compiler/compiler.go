@@ -1,10 +1,20 @@
 package compiler
 
 import (
+	"hash/fnv"
 	"strings"
 
 	"github.com/simomu-github/sfflt_lang/ast"
 	"github.com/simomu-github/sfflt_lang/token"
+)
+
+const (
+	FUNCTION_LABEL = int64(0b01) << 33
+
+	TMP_ADDR        = int64(0b00)
+	GLOBAL_VAR_ADDR = int64(0b01) << 33
+	LOCAL_VAR_ADDR  = int64(0b10) << 33
+	HEAP_ADDR       = int64(0b11) << 33
 )
 
 type Compiler struct {
@@ -49,8 +59,9 @@ func (c *Compiler) Compile() []string {
 }
 
 func (c *Compiler) VisitVar(s ast.Var) {
-	ident := stringToBinary("gv" + s.Identifier.Literal)
-	c.addInstructionWithParam(PUSH, POSI+ident)
+	hash := hashString(s.Identifier.Literal)
+	addr := intToBinary(GLOBAL_VAR_ADDR + hash)
+	c.addInstructionWithParam(PUSH, POSI+addr)
 	s.Expression.Visit(c)
 	c.addInstruction(STORE)
 }
@@ -59,8 +70,10 @@ func (c *Compiler) VisitFunction(s ast.Function) {
 	c.compilingFunction = &compilingFunction{ParamCount: len(s.Params)}
 	c.functions = append(c.functions, instructions{})
 
-	ident := stringToBinary("gf" + s.Name.Literal)
-	c.addInstructionWithParam(LABEL, ident)
+	hash := hashString(s.Name.Literal)
+	label := intToBinary(FUNCTION_LABEL + hash)
+
+	c.addInstructionWithParam(LABEL, label)
 
 	for _, stmt := range s.Body {
 		stmt.Visit(c)
@@ -151,15 +164,16 @@ func (c *Compiler) VisitExpression(s ast.ExpressionStatement) {
 }
 
 func (c *Compiler) VisitAssign(s ast.Assign) {
-	ident := stringToBinary("gv" + s.Target.Literal)
-	c.addInstructionWithParam(PUSH, POSI+ident)
+	hash := hashString(s.Target.Literal)
+	addr := intToBinary(GLOBAL_VAR_ADDR + hash)
+	c.addInstructionWithParam(PUSH, POSI+addr)
 	c.addInstruction(RETRIEVE)
 
 	c.addInstruction(DISCARD)
 
 	s.Expression.Visit(c)
 	c.addInstruction(DUP)
-	c.addInstructionWithParam(PUSH, POSI+ident)
+	c.addInstructionWithParam(PUSH, POSI+addr)
 	c.addInstruction(SWAP)
 	c.addInstruction(STORE)
 }
@@ -331,8 +345,10 @@ func (c *Compiler) VisitCall(e ast.Call) {
 	for _, arg := range e.Arguments {
 		arg.Visit(c)
 	}
-	ident := stringToBinary("gf" + e.Callee.Literal)
-	c.addInstructionWithParam(CALLSUB, ident)
+	hash := hashString(e.Callee.Literal)
+	label := intToBinary(FUNCTION_LABEL + hash)
+
+	c.addInstructionWithParam(CALLSUB, label)
 }
 
 func (c *Compiler) VisitIntegerLiteral(e ast.IntegerLiteral) {
@@ -374,21 +390,22 @@ func (c *Compiler) argumentVariable(e ast.Variable) {
 }
 
 func (c *Compiler) globalVariable(e ast.Variable) {
-	ident := stringToBinary("gv" + e.Identifier.Literal)
-	c.addInstructionWithParam(PUSH, POSI+ident)
+	hash := hashString(e.Identifier.Literal)
+	addr := intToBinary(GLOBAL_VAR_ADDR + hash)
+	c.addInstructionWithParam(PUSH, POSI+addr)
 	c.addInstruction(RETRIEVE)
 }
 
 func (c *Compiler) VisitGet(s ast.Get) {
-	tmp := stringToBinary("t" + "tmp")
-	c.addInstructionWithParam(PUSH, POSI+tmp)
+	addr := intToBinary(TMP_ADDR)
+	c.addInstructionWithParam(PUSH, POSI+addr)
 	if s.Token.Type == token.GETN {
 		c.addInstruction(GETN)
 	} else {
 		c.addInstruction(GETC)
 	}
 
-	c.addInstructionWithParam(PUSH, POSI+tmp)
+	c.addInstructionWithParam(PUSH, POSI+addr)
 	c.addInstruction(RETRIEVE)
 }
 
@@ -416,13 +433,12 @@ func (c *Compiler) reserveJumpLabel(instruction InstructionType) int {
 }
 
 func (c *Compiler) markJumpLabel() string {
-	labelPrefix := stringToBinary("l")
 	label := intToBinary(int64(c.labelIndex))
 	c.labelIndex++
 
-	c.addInstructionWithParam(LABEL, labelPrefix+label)
+	c.addInstructionWithParam(LABEL, label)
 
-	return labelPrefix + label
+	return label
 }
 
 func (c *Compiler) confirmJumpLabel(pos int, label string) {
@@ -454,15 +470,6 @@ func (c *Compiler) endLoop() {
 	c.breakPositions = c.breakPositions[:len(c.breakPositions)-1]
 }
 
-func stringToBinary(ident string) string {
-	result := ""
-	for _, char := range ident {
-		result += intToBinary(int64(char))
-	}
-
-	return result
-}
-
 func intToBinary(value int64) string {
 	binary := []string{}
 
@@ -485,4 +492,10 @@ func intToBinary(value int64) string {
 		binary[i], binary[len(binary)-i-1] = binary[len(binary)-i-1], binary[i]
 	}
 	return strings.Join(binary, "")
+}
+
+func hashString(str string) int64 {
+	h := fnv.New32a()
+	h.Write([]byte(str))
+	return int64(h.Sum32())
 }
