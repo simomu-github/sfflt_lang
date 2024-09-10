@@ -11,7 +11,8 @@ import (
 const (
 	FUNCTION_LABEL = int64(0b01) << 33
 
-	TMP_ADDR        = int64(0b00)
+	VM_ADDR         = int64(0b00)
+	VM_ALLOC_REC    = int64(0b01) << 17
 	GLOBAL_VAR_ADDR = int64(0b01) << 33
 	LOCAL_VAR_ADDR  = int64(0b10) << 33
 	HEAP_ADDR       = int64(0b11) << 33
@@ -45,6 +46,11 @@ func New(statements []ast.Statement) *Compiler {
 }
 
 func (c *Compiler) Compile() []string {
+	c.addInstructionWithParam(PUSH, POSI+intToBinary(VM_ALLOC_REC))
+	initHeapAddr := HEAP_ADDR + 0
+	c.addInstructionWithParam(PUSH, POSI+intToBinary(initHeapAddr))
+	c.addInstruction(STORE)
+
 	for _, e := range c.statements {
 		e.Visit(c)
 	}
@@ -419,7 +425,7 @@ func (c *Compiler) localVariable(e ast.Variable) {
 }
 
 func (c *Compiler) VisitGet(s ast.Get) {
-	addr := intToBinary(TMP_ADDR)
+	addr := intToBinary(VM_ADDR)
 	c.addInstructionWithParam(PUSH, POSI+addr)
 	if s.Token.Type == token.GETN {
 		c.addInstruction(GETN)
@@ -496,6 +502,17 @@ func (c *Compiler) currentLoopBreakPositions() []int {
 
 func (c *Compiler) endLoop() {
 	c.breakPositions = c.breakPositions[:len(c.breakPositions)-1]
+}
+
+func (c *Compiler) allocate(size int64) {
+	c.addInstructionWithParam(PUSH, POSI+intToBinary(VM_ALLOC_REC))
+	c.addInstruction(RETRIEVE)
+	c.addInstruction(DUP)
+	c.addInstructionWithParam(PUSH, POSI+intToBinary(size))
+	c.addInstruction(ADD)
+	c.addInstructionWithParam(PUSH, POSI+intToBinary(VM_ALLOC_REC))
+	c.addInstruction(SWAP)
+	c.addInstruction(STORE)
 }
 
 func intToBinary(value int64) string {

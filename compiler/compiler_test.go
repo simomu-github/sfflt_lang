@@ -443,12 +443,27 @@ func compile(input string, t *testing.T) []string {
 }
 
 func assertInstructions(actuals []string, expects []string, t *testing.T) {
-	for i, expect := range expects {
-		if len(actuals) <= i {
-			t.Fatalf("tests[%d] - expected instruction does not exists. expected=%q", i, expect)
-		}
+	// init vm heap instructions
+	if len(actuals) < 3 {
+		t.Fatal("Initialize vm heap instructions do not exists")
+	}
+	initExpects := []string{
+		"FFFLFFFFFFFFFFFFFFFFFT",                  // push last heap allocate address
+		"FFFLLFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFT", // push init heap address
+		"LLF", // store
+	}
+	for i, expect := range initExpects {
 		if actuals[i] != expect {
 			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, actuals[i])
+		}
+	}
+
+	for i, expect := range expects {
+		if len(actuals) <= i+3 {
+			t.Fatalf("tests[%d] - expected instruction does not exists. expected=%q", i, expect)
+		}
+		if actuals[i+3] != expect {
+			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, actuals[i+3])
 		}
 	}
 }
