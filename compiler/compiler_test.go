@@ -21,9 +21,9 @@ func TestCompilePrimary(t *testing.T) {
 		"FTT",
 		"FFFFT",
 		"FTT",
-		"FFFLLLFLFFLLLFLFFLLFLLFLLLLFFFFT",
+		"FFFFT",
 		"LTLL",
-		"FFFLLLFLFFLLLFLFFLLFLLFLLLLFFFFT",
+		"FFFFT",
 		"LLL",
 		"FTT",
 	}
@@ -35,14 +35,14 @@ func TestCompileBang(t *testing.T) {
 	input := "!true;"
 	instructions := compile(input, t)
 	expects := []string{
-		"FFFLT",        // push 1
-		"TLFLLFLLFFFT", // jump label when zero
-		"FFFFT",        // push 0
-		"TFTLLFLLFFLT", // jump
-		"TFFLLFLLFFFT", // mark label
-		"FFFLT",        // push 1
-		"TFFLLFLLFFLT", // mark label
-		"FTT",          // discard
+		"FFFLT", // push 1
+		"TLFFT", // jump label when zero
+		"FFFFT", // push 0
+		"TFTLT", // jump
+		"TFFFT", // mark label
+		"FFFLT", // push 1
+		"TFFLT", // mark label
+		"FTT",   // discard
 	}
 
 	assertInstructions(instructions, expects, t)
@@ -52,10 +52,10 @@ func TestCompileCall(t *testing.T) {
 	input := "a(1, 2, 3);"
 	instructions := compile(input, t)
 	expects := []string{
-		"FFFLT",                     // push 1
-		"FFFLFT",                    // push 2
-		"FFFLLT",                    // push 3
-		"TFLLLFFLLLLLFFLLFLLFFFFLT", // call sub
+		"FFFLT",                                  // push 1
+		"FFFLFT",                                 // push 2
+		"FFFLLT",                                 // push 3
+		"TFLLFLLLFFLFFFFFFLLFFFFLFLFFLFFLFLLFFT", // call sub
 	}
 
 	assertInstructions(instructions, expects, t)
@@ -114,16 +114,16 @@ func TestCompileComparison(t *testing.T) {
 	input := "1 > 2;"
 	instructions := compile(input, t)
 	expects := []string{
-		"FFFLT",        // push 1
-		"FFFLFT",       // push 2
-		"FTL",          // swap
-		"LFFL",         // sub
-		"TLLLLFLLFFFT", // jump label when negative
-		"FFFFT",        // push 0
-		"TFTLLFLLFFLT", // jump label
-		"TFFLLFLLFFFT", // mark label
-		"FFFLT",        // push 1
-		"TFFLLFLLFFLT", // mark label
+		"FFFLT",  // push 1
+		"FFFLFT", // push 2
+		"FTL",    // swap
+		"LFFL",   // sub
+		"TLLFT",  // jump label when negative
+		"FFFFT",  // push 0
+		"TFTLT",  // jump label
+		"TFFFT",  // mark label
+		"FFFLT",  // push 1
+		"TFFLT",  // mark label
 	}
 
 	assertInstructions(instructions, expects, t)
@@ -133,20 +133,20 @@ func TestCompileComparisonWithEqual(t *testing.T) {
 	input := "1 >= 2;"
 	instructions := compile(input, t)
 	expects := []string{
-		"FFFLT",         // push lhs
-		"FFFLFT",        // push rhs
-		"FTL",           // swap
-		"LFFL",          // sub
-		"FTF",           // dup
-		"TLFLLFLLFFFT",  // jump label when zero
-		"TLLLLFLLFFLT",  // jump label when negative
-		"FFFFT",         // push 0
-		"TFTLLFLLFFLFT", // jump label to end
-		"TFFLLFLLFFFT",  // mark label zero
-		"FTT",           // discard
-		"TFFLLFLLFFLT",  // mark label negative
-		"FFFLT",         // push 1
-		"TFFLLFLLFFLFT", // mark label end
+		"FFFLT",  // push lhs
+		"FFFLFT", // push rhs
+		"FTL",    // swap
+		"LFFL",   // sub
+		"FTF",    // dup
+		"TLFFT",  // jump label when zero
+		"TLLLT",  // jump label when negative
+		"FFFFT",  // push 0
+		"TFTLFT", // jump label to end
+		"TFFFT",  // mark label zero
+		"FTT",    // discard
+		"TFFLT",  // mark label negative
+		"FFFLT",  // push 1
+		"TFFLFT", // mark label end
 	}
 
 	assertInstructions(instructions, expects, t)
@@ -156,16 +156,16 @@ func TestCompileEquality(t *testing.T) {
 	input := "1 != 2;"
 	instructions := compile(input, t)
 	expects := []string{
-		"FFFLT",        // push lhs
-		"FFFLFT",       // push rhs
-		"LFFL",         // sub
-		"TLFLLFLLFFFT", // jump label when zero
-		"FFFLT",        // push 1
-		"TFTLLFLLFFLT", // jump label to end
-		"TFFLLFLLFFFT", // mark label when zero
-		"FFFFT",        // push 0
-		"TFFLLFLLFFLT", // mark label end
-		"FTT",          // discard
+		"FFFLT",  // push lhs
+		"FFFLFT", // push rhs
+		"LFFL",   // sub
+		"TLFFT",  // jump label when zero
+		"FFFLT",  // push 1
+		"TFTLT",  // jump label to end
+		"TFFFT",  // mark label when zero
+		"FFFFT",  // push 0
+		"TFFLT",  // mark label end
+		"FTT",    // discard
 	}
 
 	assertInstructions(instructions, expects, t)
@@ -175,16 +175,16 @@ func TestCompileAnd(t *testing.T) {
 	input := "true && false;"
 	instructions := compile(input, t)
 	expects := []string{
-		"FFFLT",        // push lhs
-		"TLFLLFLLFFFT", // jump label when zero
-		"FFFFT",        // push rhs
-		"TLFLLFLLFFFT", // jump label when zero
-		"FFFLT",        // push 1
-		"TFTLLFLLFFLT", // jump label to end
-		"TFFLLFLLFFFT", // mark label when zero
-		"FFFFT",        // push 0
-		"TFFLLFLLFFLT", // mark label end
-		"FTT",          // discard
+		"FFFLT", // push lhs
+		"TLFFT", // jump label when zero
+		"FFFFT", // push rhs
+		"TLFFT", // jump label when zero
+		"FFFLT", // push 1
+		"TFTLT", // jump label to end
+		"TFFFT", // mark label when zero
+		"FFFFT", // push 0
+		"TFFLT", // mark label end
+		"FTT",   // discard
 	}
 
 	assertInstructions(instructions, expects, t)
@@ -194,21 +194,21 @@ func TestCompileOr(t *testing.T) {
 	input := "true || false;"
 	instructions := compile(input, t)
 	expects := []string{
-		"FFFLT",         // push lhs
-		"TLFLLFLLFFFT",  // jump label when zero
-		"FFFLT",         // push 1
-		"TFTLLFLLFFLFT", // jump label to end
+		"FFFLT",  // push lhs
+		"TLFFT",  // jump label when zero
+		"FFFLT",  // push 1
+		"TFTLFT", // jump label to end
 
-		"TFFLLFLLFFFT",  // mark label when zero
-		"FFFFT",         // push rhs
-		"TLFLLFLLFFLT",  // jump label when zero
-		"FFFLT",         // push 1
-		"TFTLLFLLFFLFT", // jump label to end
+		"TFFFT",  // mark label when zero
+		"FFFFT",  // push rhs
+		"TLFLT",  // jump label when zero
+		"FFFLT",  // push 1
+		"TFTLFT", // jump label to end
 
-		"TFFLLFLLFFLT",  // mark label when zero
-		"FFFFT",         // push 0
-		"TFFLLFLLFFLFT", // mark label end
-		"FTT",           // discard
+		"TFFLT",  // mark label when zero
+		"FFFFT",  // push 0
+		"TFFLFT", // mark label end
+		"FTT",    // discard
 	}
 
 	assertInstructions(instructions, expects, t)
@@ -218,19 +218,19 @@ func TestCompileAssign(t *testing.T) {
 	input := "var a = 1; a = 2;"
 	instructions := compile(input, t)
 	expects := []string{
-		"FFFLLFFLLLLLLFLLFLLFFFFLT", // push "a" address
-		"FFFLT",                     // push 1
-		"LLF",                       // store
+		"FFFLFLLLFFLFFFFFFLLFFFFLFLFFLFFLFLLFFT", // push "a" address
+		"FFFLT",                                  // push 1
+		"LLF",                                    // store
 
-		"FFFLLFFLLLLLLFLLFLLFFFFLT", // push "a" address
-		"LLL",                       // retrieve
-		"FTT",                       // discard
-		"FFFLFT",                    // push 2
-		"FTF",                       // dup
-		"FFFLLFFLLLLLLFLLFLLFFFFLT", // push "a" address
-		"FTL",                       // swap
-		"LLF",                       // store
-		"FTT",                       // discard
+		"FFFLFLLLFFLFFFFFFLLFFFFLFLFFLFFLFLLFFT", // push "a" address
+		"LLL",                                    // retrieve
+		"FTT",                                    // discard
+		"FFFLFT",                                 // push 2
+		"FTF",                                    // dup
+		"FFFLFLLLFFLFFFFFFLLFFFFLFLFFLFFLFLLFFT", // push "a" address
+		"FTL",                                    // swap
+		"LLF",                                    // store
+		"FTT",                                    // discard
 	}
 
 	assertInstructions(instructions, expects, t)
@@ -255,15 +255,15 @@ func TestCompileIf(t *testing.T) {
 	input := "if (true) { 1; } else { 2;}"
 	instructions := compile(input, t)
 	expects := []string{
-		"FFFLT",        // condition
-		"TLFLLFLLFFFT", // jump label when zero
-		"FFFLT",        // then statement
-		"FTT",          // then statement
-		"TFTLLFLLFFLT", // jump label to end
-		"TFFLLFLLFFFT", // mark label zero
-		"FFFLFT",       // else statement
-		"FTT",          // else statement
-		"TFFLLFLLFFLT", //mark label end
+		"FFFLT",  // condition
+		"TLFFT",  // jump label when zero
+		"FFFLT",  // then statement
+		"FTT",    // then statement
+		"TFTLT",  // jump label to end
+		"TFFFT",  // mark label zero
+		"FFFLFT", // else statement
+		"FTT",    // else statement
+		"TFFLT",  //mark label end
 	}
 
 	assertInstructions(instructions, expects, t)
@@ -273,13 +273,13 @@ func TestCompileWhile(t *testing.T) {
 	input := "while (true) true;"
 	instructions := compile(input, t)
 	expects := []string{
-		"TFFLLFLLFFFT", // mark label loop
-		"FFFLT",        // condition
-		"TLFLLFLLFFLT", // jump label when zero
-		"FFFLT",        // body statement
-		"FTT",          // body statement
-		"TFTLLFLLFFFT", // jump label to loop
-		"TFFLLFLLFFLT", // mark label zero
+		"TFFFT", // mark label loop
+		"FFFLT", // condition
+		"TLFLT", // jump label when zero
+		"FFFLT", // body statement
+		"FTT",   // body statement
+		"TFTFT", // jump label to loop
+		"TFFLT", // mark label zero
 	}
 
 	assertInstructions(instructions, expects, t)
@@ -289,10 +289,10 @@ func TestCompileGlobalVariable(t *testing.T) {
 	input := "var a = 1; a;"
 	instructions := compile(input, t)
 	expects := []string{
-		"FFFLLFFLLLLLLFLLFLLFFFFLT",
+		"FFFLFLLLFFLFFFFFFLLFFFFLFLFFLFFLFLLFFT",
 		"FFFLT",
 		"LLF",
-		"FFFLLFFLLLLLLFLLFLLFFFFLT",
+		"FFFLFLLLFFLFFFFFFLLFFFFLFLFFLFFLFLLFFT",
 		"LLL",
 		"FTT",
 	}
@@ -305,7 +305,7 @@ func TestCompileArgumentVariable(t *testing.T) {
 	instructions := compile(input, t)
 	expects := []string{
 		"TTT",
-		"TFFLLFFLLLLLFFLLFLLFFLLFT",
+		"TFFLFLLLFFFLLFFFFLLFFFFLFFLLLLFFLLFFLT",
 		"FLFFLFT", // copy 2
 		"FLFFLT",  // copy 1
 		"LFFF",    // add
@@ -322,10 +322,10 @@ func TestCompileFunction(t *testing.T) {
 	input := "func a() { 1;} a();"
 	instructions := compile(input, t)
 	expects := []string{
-		"TFLLLFFLLLLLFFLLFLLFFFFLT",
+		"TFLLFLLLFFLFFFFFFLLFFFFLFLFFLFFLFLLFFT",
 		"FTT",
 		"TTT",
-		"TFFLLFFLLLLLFFLLFLLFFFFLT",
+		"TFFLFLLLFFLFFFFFFLLFFFFLFLFFLFFLFLLFFT",
 		"FFFLT",
 		"FTT",
 		"FFFFT",
@@ -344,10 +344,10 @@ func TestCompileReturn(t *testing.T) {
 
 	instructions := compiler.Compile()
 	expects := []string{
-		"TFLLLFFLLLLLFFLLFLLFFFFLT",
+		"TFLLFLLLFFLFFFFFFLLFFFFLFLFFLFFLFLLFFT",
 		"FTT",
 		"TTT",
-		"TFFLLFFLLLLLFFLLFLLFFFFLT",
+		"TFFLFLLLFFLFFFFFFLLFFFFLFLFFLFFLFLLFFT",
 		"FFFLT",
 		"TLT",
 		"FFFFT",
@@ -362,22 +362,22 @@ func TestCompileBreak(t *testing.T) {
 	instructions := compile(input, t)
 	expects := []string{
 		// outer while
-		"TFFLLFLLFFFT",  // mark label loop
-		"FFFLT",         // condition
-		"TLFLLFLLFFLLT", // jump label when zero
+		"TFFFT",  // mark label loop
+		"FFFLT",  // condition
+		"TLFLLT", // jump label when zero
 
 		// inner while
-		"TFFLLFLLFFLT",  // mark label loop
-		"FFFLT",         // condition
-		"TLFLLFLLFFLFT", // jump label when zero
-		"TFTLLFLLFFLFT", // break, jump label to end
-		"TFTLLFLLFFLT",  // jump label to loop
-		"TFFLLFLLFFLFT", // mark label zero
+		"TFFLT",  // mark label loop
+		"FFFLT",  // condition
+		"TLFLFT", // jump label when zero
+		"TFTLFT", // break, jump label to end
+		"TFTLT",  // jump label to loop
+		"TFFLFT", // mark label zero
 
 		// outer while
-		"TFTLLFLLFFLLT", // break, jump label to end
-		"TFTLLFLLFFFT",  // jump label to loop
-		"TFFLLFLLFFLLT", // mark label zero
+		"TFTLLT", // break, jump label to end
+		"TFTFT",  // jump label to loop
+		"TFFLLT", // mark label zero
 	}
 
 	assertInstructions(instructions, expects, t)
