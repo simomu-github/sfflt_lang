@@ -438,9 +438,37 @@ func (c *Compiler) VisitGet(s ast.Get) {
 }
 
 func (c *Compiler) VisitArrayLiteral(e ast.ArrayLiteral) {
+	length := int64(len(e.Elements))
+	capacity := length * 2
+
+	c.allocate(capacity + 2)
+
+	c.addInstruction(DUP)
+	c.addInstructionWithParam(PUSH, POSI+intToBinary(length))
+	c.addInstruction(STORE)
+
+	c.addInstruction(DUP)
+	c.addInstructionWithParam(PUSH, ONE)
+	c.addInstruction(ADD)
+	c.addInstructionWithParam(PUSH, POSI+intToBinary(capacity))
+	c.addInstruction(STORE)
+
+	for i, element := range e.Elements {
+		c.addInstruction(DUP)
+		c.addInstructionWithParam(PUSH, POSI+intToBinary(int64(i+2)))
+		c.addInstruction(ADD)
+		element.Visit(c)
+		c.addInstruction(STORE)
+	}
 }
 
 func (c *Compiler) VisitIndex(e ast.Index) {
+	e.Receiver.Visit(c)
+	e.Index.Visit(c)
+	c.addInstructionWithParam(PUSH, POSI+intToBinary(int64(2)))
+	c.addInstruction(ADD)
+	c.addInstruction(ADD)
+	c.addInstruction(RETRIEVE)
 }
 
 func (c *Compiler) addInstruction(instruction InstructionType) {
