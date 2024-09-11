@@ -15,6 +15,8 @@ const (
 	GLOBAL_VAR_ADDR = int64(0b01) << 33
 	LOCAL_VAR_ADDR  = int64(0b10) << 33
 	HEAP_ADDR       = int64(0b11) << 33
+
+	LOCAL_VAR_SCOPE_SHIFT = 8
 )
 
 type Compiler struct {
@@ -59,11 +61,18 @@ func (c *Compiler) Compile() []string {
 }
 
 func (c *Compiler) VisitVar(s ast.Var) {
-	hash := hashString(s.Identifier.Literal)
-	addr := intToBinary(GLOBAL_VAR_ADDR + hash)
-	c.addInstructionWithParam(PUSH, POSI+addr)
-	s.Expression.Visit(c)
-	c.addInstruction(STORE)
+	if s.IsLocal {
+		addr := intToBinary(LOCAL_VAR_ADDR + int64(s.ScopeDepth<<LOCAL_VAR_SCOPE_SHIFT) + int64(s.LocalIndex))
+		c.addInstructionWithParam(PUSH, POSI+addr)
+		s.Expression.Visit(c)
+		c.addInstruction(STORE)
+	} else {
+		hash := hashString(s.Identifier.Literal)
+		addr := intToBinary(GLOBAL_VAR_ADDR + hash)
+		c.addInstructionWithParam(PUSH, POSI+addr)
+		s.Expression.Visit(c)
+		c.addInstruction(STORE)
+	}
 }
 
 func (c *Compiler) VisitFunction(s ast.Function) {
@@ -164,8 +173,13 @@ func (c *Compiler) VisitExpression(s ast.ExpressionStatement) {
 }
 
 func (c *Compiler) VisitAssign(s ast.Assign) {
-	hash := hashString(s.Target.Literal)
-	addr := intToBinary(GLOBAL_VAR_ADDR + hash)
+	addr := ""
+	if s.Target.Type == ast.LOCAL {
+		addr = intToBinary(LOCAL_VAR_ADDR + int64(s.Target.ScopeDepth<<LOCAL_VAR_SCOPE_SHIFT) + int64(s.Target.LocalIndex))
+	} else {
+		hash := hashString(s.Target.Identifier.Literal)
+		addr = intToBinary(GLOBAL_VAR_ADDR + hash)
+	}
 	c.addInstructionWithParam(PUSH, POSI+addr)
 	c.addInstruction(RETRIEVE)
 
@@ -376,8 +390,10 @@ func (c *Compiler) VisitBooleanLiteral(e ast.BooleanLiteral) {
 }
 
 func (c *Compiler) VisitVariable(e ast.Variable) {
-	if e.IsArgument {
+	if e.Type == ast.ARGUMENT {
 		c.argumentVariable(e)
+	} else if e.Type == ast.LOCAL {
+		c.localVariable(e)
 	} else {
 		c.globalVariable(e)
 	}
@@ -392,6 +408,12 @@ func (c *Compiler) argumentVariable(e ast.Variable) {
 func (c *Compiler) globalVariable(e ast.Variable) {
 	hash := hashString(e.Identifier.Literal)
 	addr := intToBinary(GLOBAL_VAR_ADDR + hash)
+	c.addInstructionWithParam(PUSH, POSI+addr)
+	c.addInstruction(RETRIEVE)
+}
+
+func (c *Compiler) localVariable(e ast.Variable) {
+	addr := intToBinary(LOCAL_VAR_ADDR + int64(e.ScopeDepth<<LOCAL_VAR_SCOPE_SHIFT) + int64(e.LocalIndex))
 	c.addInstructionWithParam(PUSH, POSI+addr)
 	c.addInstruction(RETRIEVE)
 }
