@@ -214,7 +214,7 @@ func TestCompileOr(t *testing.T) {
 	assertInstructions(instructions, expects, t)
 }
 
-func TestCompileAssign(t *testing.T) {
+func TestCompileGlobalVariableAssign(t *testing.T) {
 	input := "var a = 1; a = 2;"
 	instructions := compile(input, t)
 	expects := []string{
@@ -231,6 +231,29 @@ func TestCompileAssign(t *testing.T) {
 		"FTL",                                    // swap
 		"LLF",                                    // store
 		"FTT",                                    // discard
+	}
+
+	assertInstructions(instructions, expects, t)
+}
+
+func TestCompileAssignLocalVariable(t *testing.T) {
+	input := "{ var a = 1; a = 2; }"
+	instructions := compile(input, t)
+	expects := []string{
+
+		"FFFLFFFFFFFFFFFFFFFFFFFFFFFFFLFFFFFFFFT", // push local variable addr (scope 1, index 0)
+		"FFFLT", // push 1
+		"LLF",   // store
+
+		"FFFLFFFFFFFFFFFFFFFFFFFFFFFFFLFFFFFFFFT", // push local variable addr (scope 1, index 0)
+		"LLL",    // retrieve
+		"FTT",    // discard
+		"FFFLFT", // push 2
+		"FTF",    // dup
+		"FFFLFFFFFFFFFFFFFFFFFFFFFFFFFLFFFFFFFFT", // push local variable addr (scope 1, index 0)
+		"FTL", // swap
+		"LLF", // store
+		"FTT", // discard
 	}
 
 	assertInstructions(instructions, expects, t)
@@ -313,6 +336,30 @@ func TestCompileArgumentVariable(t *testing.T) {
 		"FFFFT",   // push 0
 		"FLTFLLT", // slide 3
 		"TLT",     // end sub
+	}
+
+	assertInstructions(instructions, expects, t)
+}
+
+func TestCompileLocalVariable(t *testing.T) {
+	input := "{ var a = 1; { var b = 2; var c = 3;  a; b; }}"
+	instructions := compile(input, t)
+	expects := []string{
+		"FFFLFFFFFFFFFFFFFFFFFFFFFFFFFLFFFFFFFFT", // push local variable addr (scope 1, index 0)
+		"FFFLT", // push 1
+		"LLF",   // store
+		"FFFLFFFFFFFFFFFFFFFFFFFFFFFFLFFFFFFFFFT", // push local variable addr (scope 2, index 0)
+		"FFFLFT", // push 2
+		"LLF",    // store
+		"FFFLFFFFFFFFFFFFFFFFFFFFFFFFLFFFFFFFFLT", // push local variable addr (scope 2, index 1)
+		"FFFLLT", // push 3
+		"LLF",    // store
+		"FFFLFFFFFFFFFFFFFFFFFFFFFFFFFLFFFFFFFFT", // push local variable addr (scope 1, index 0)
+		"LLL", // retrieve
+		"FTT", // discard
+		"FFFLFFFFFFFFFFFFFFFFFFFFFFFFLFFFFFFFFFT", // push local variable addr (scope 2, index 0)
+		"LLL", // retrieve
+		"FTT", // discard
 	}
 
 	assertInstructions(instructions, expects, t)

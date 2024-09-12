@@ -16,16 +16,27 @@ type Parser struct {
 	isFunction      bool
 	nestedLoopCount int
 	stackTop        int
-	scopes          []map[string]argumentVariable
+	scopes          []map[string]*declaredVariable
 	Errors          []string
 }
 
-type argumentVariable struct {
+type declaredVariable struct {
+	initialized   bool
+	typ           variableType
+	scopeDepth    int
 	argumentIndex int
+	localIndex    int
 }
 
+const (
+	LOCAL    = "LOCAL"
+	ARGUMENT = "ARGUMENT"
+)
+
+type variableType string
+
 func New(lexer *lexer.Lexer) *Parser {
-	p := &Parser{lexer: lexer, isFunction: false, Errors: []string{}, scopes: []map[string]argumentVariable{}}
+	p := &Parser{lexer: lexer, isFunction: false, Errors: []string{}, scopes: []map[string]*declaredVariable{}}
 	p.nextToken()
 	p.nextToken()
 	return p
@@ -73,6 +84,7 @@ func (p *Parser) parseVarDeclaration() ast.Statement {
 		return nil
 	}
 	identifier := p.currentToken
+	local := p.declareLocalVariable(identifier)
 	p.nextToken()
 
 	if p.currentToken.Type != token.ASSIGN {
@@ -82,6 +94,7 @@ func (p *Parser) parseVarDeclaration() ast.Statement {
 	p.nextToken()
 
 	expr := p.parseExpression()
+	p.markInitializedVariable(identifier)
 
 	if p.peekToken.Type != token.SEMICOLON {
 		p.parseError(p.currentToken, "Expect ';' after statement.")
@@ -89,7 +102,22 @@ func (p *Parser) parseVarDeclaration() ast.Statement {
 	}
 	p.nextToken()
 
-	return ast.Var{Identifier: identifier, Expression: expr}
+	isLocal := false
+	depth := 0
+	index := 0
+	if local != nil {
+		isLocal = true
+		depth = local.scopeDepth
+		index = local.localIndex
+	}
+
+	return ast.Var{
+		Identifier: identifier,
+		Expression: expr,
+		IsLocal:    isLocal,
+		ScopeDepth: depth,
+		LocalIndex: index,
+	}
 }
 
 func (p *Parser) parseFunctionDeclaration() ast.Statement {
@@ -124,7 +152,7 @@ func (p *Parser) parseFunctionDeclaration() ast.Statement {
 			}
 
 			params = append(params, p.currentToken)
-			p.declareVariable(p.currentToken, len(params))
+			p.declareArgumentVariable(p.currentToken, len(params))
 
 			p.nextToken()
 			if p.currentToken.Type == token.COMMA {
@@ -294,6 +322,7 @@ func (p *Parser) parseWhile() ast.Statement {
 }
 
 func (p *Parser) parseBlock() ast.Statement {
+	p.beginScope()
 	p.nextToken()
 	stmts := []ast.Statement{}
 	for p.currentToken.Type != token.RBRACE {
@@ -305,6 +334,7 @@ func (p *Parser) parseBlock() ast.Statement {
 		p.nextToken()
 	}
 
+	p.endScope()
 	return ast.Block{Statements: stmts}
 }
 
@@ -327,12 +357,12 @@ func (p *Parser) parseAssign() ast.Expression {
 			p.parseError(p.currentToken, "Invalid assignment target.")
 			return nil
 		}
-		if variable.IsArgument {
+		if variable.Type == ast.ARGUMENT {
 			p.parseError(p.currentToken, "Can not assign to argument variable.")
 			return nil
 		}
 		p.popStack()
-		return ast.Assign{Target: variable.Identifier, Expression: right}
+		return ast.Assign{Target: variable, Expression: right}
 	}
 
 	return expr
@@ -507,19 +537,26 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 }
 
 func (p *Parser) parseVariable() ast.Expression {
-	if p.isFunction {
-		if arg := p.resolveLocal(p.currentToken); arg != nil {
-			top := p.stackTop
-			p.pushStack()
-			return ast.Variable{
-				Identifier:    p.currentToken,
-				IsArgument:    true,
-				ArgumentIndex: arg.argumentIndex,
-				RelativeIndex: top,
-			}
+	if local := p.resolveLocal(p.currentToken); local != nil {
+		top := p.stackTop
+		p.pushStack()
+		var typ ast.VariableType
+		if local.typ == LOCAL {
+			typ = ast.LOCAL
+		} else {
+			typ = ast.ARGUMENT
+		}
+		return ast.Variable{
+			Identifier:    p.currentToken,
+			Type:          typ,
+			ScopeDepth:    local.scopeDepth,
+			LocalIndex:    local.localIndex,
+			ArgumentIndex: local.argumentIndex,
+			RelativeIndex: top,
 		}
 	}
 	p.pushStack()
+
 	return ast.Variable{Identifier: p.currentToken}
 }
 
@@ -560,30 +597,59 @@ func (p *Parser) popStack() {
 }
 
 func (p *Parser) beginScope() {
-	p.scopes = append(p.scopes, map[string]argumentVariable{})
+	p.scopes = append(p.scopes, map[string]*declaredVariable{})
 }
 
 func (p *Parser) endScope() {
 	p.scopes = p.scopes[:len(p.scopes)-1]
 }
 
-func (p *Parser) declareVariable(name token.Token, argumentIndex int) {
+func (p *Parser) declareLocalVariable(name token.Token) *declaredVariable {
+	depth := len(p.scopes)
+	return p.declareVariable(name, &declaredVariable{typ: LOCAL, scopeDepth: depth})
+}
+
+func (p *Parser) declareArgumentVariable(name token.Token, argumentIndex int) {
+	p.declareVariable(name, &declaredVariable{typ: ARGUMENT, argumentIndex: argumentIndex})
+	p.markInitializedVariable(name)
+}
+
+func (p *Parser) declareVariable(name token.Token, variable *declaredVariable) *declaredVariable {
 	if len(p.scopes) == 0 {
-		return
+		return nil
 	}
+
 	scope := p.scopes[len(p.scopes)-1]
 	if _, ok := scope[name.Literal]; ok {
 		p.parseError(p.currentToken, "ALready avariable with this name in this scope.")
+		return nil
+	}
+
+	variable.localIndex = len(scope)
+	scope[name.Literal] = variable
+
+	return variable
+}
+
+func (p *Parser) markInitializedVariable(name token.Token) {
+	if len(p.scopes) == 0 {
 		return
 	}
 
-	scope[name.Literal] = argumentVariable{argumentIndex: argumentIndex}
+	scope := p.scopes[len(p.scopes)-1]
+	variable, ok := scope[name.Literal]
+
+	if !ok {
+		p.parseError(name, "Not declared variable in this scope.")
+		return
+	}
+	variable.initialized = true
 }
 
-func (p *Parser) resolveLocal(name token.Token) *argumentVariable {
+func (p *Parser) resolveLocal(name token.Token) *declaredVariable {
 	for i := len(p.scopes) - 1; i >= 0; i-- {
-		if result, ok := p.scopes[i][name.Literal]; ok {
-			return &result
+		if result, ok := p.scopes[i][name.Literal]; ok && result.initialized {
+			return result
 		}
 	}
 
