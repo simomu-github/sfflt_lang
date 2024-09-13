@@ -42,6 +42,7 @@ const (
 	IF     = "IF"
 	ELSE   = "ELSE"
 	WHILE  = "WHILE"
+	FOR    = "FOR"
 	RETURN = "RETURN"
 	BREAK  = "BREAK"
 
@@ -69,6 +70,7 @@ var keywords = map[string]TokenType{
 	"if":     IF,
 	"else":   ELSE,
 	"while":  WHILE,
+	"for":    FOR,
 	"return": RETURN,
 	"break":  BREAK,
 

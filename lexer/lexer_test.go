@@ -13,7 +13,7 @@ func TestScanToken(t *testing.T) {
 !=
 <><=>=&&||
 'a'123'\n'
-var func if else while true false return break
+var func if else while for true false return break
 putn putc getn getc hoge_fuga0
 `
 
@@ -57,10 +57,11 @@ putn putc getn getc hoge_fuga0
 		{token.IF, "if", 7, 11},
 		{token.ELSE, "else", 7, 16},
 		{token.WHILE, "while", 7, 22},
-		{token.TRUE, "true", 7, 27},
-		{token.FALSE, "false", 7, 33},
-		{token.RETURN, "return", 7, 40},
-		{token.BREAK, "break", 7, 46},
+		{token.FOR, "for", 7, 26},
+		{token.TRUE, "true", 7, 31},
+		{token.FALSE, "false", 7, 37},
+		{token.RETURN, "return", 7, 44},
+		{token.BREAK, "break", 7, 50},
 
 		{token.PUTN, "putn", 8, 4},
 		{token.PUTC, "putc", 8, 9},
