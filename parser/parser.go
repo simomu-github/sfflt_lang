@@ -196,6 +196,10 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseWhile()
 	}
 
+	if p.currentToken.Type == token.FOR {
+		return p.parseFor()
+	}
+
 	if p.currentToken.Type == token.LBRACE {
 		return p.parseBlock()
 	}
@@ -319,6 +323,89 @@ func (p *Parser) parseWhile() ast.Statement {
 
 	p.endLoop()
 	return ast.While{Condition: condition, Body: body}
+}
+
+func (p *Parser) parseFor() ast.Statement {
+	p.beginScope()
+	p.beginLoop()
+
+	p.nextToken()
+	if p.currentToken.Type != token.LPAREN {
+		p.parseError(p.currentToken, "Expect '(' after while.")
+		return nil
+	}
+	p.nextToken()
+
+	var initializer ast.Statement
+	if p.currentToken.Type == token.SEMICOLON {
+		initializer = nil
+	} else if p.currentToken.Type == token.VAR {
+		initializer = p.parseVarDeclaration()
+	} else {
+		expr := p.parseExpression()
+		if p.peekToken.Type != token.SEMICOLON {
+			p.parseError(p.currentToken, "Expect ';' after for initialzier.")
+			return nil
+		}
+		p.nextToken()
+		initializer = ast.ExpressionStatement{Expression: expr}
+	}
+	p.nextToken()
+
+	var condition ast.Expression
+	if p.currentToken.Type != token.SEMICOLON {
+		condition = p.parseExpression()
+		if p.peekToken.Type != token.SEMICOLON {
+			p.parseError(p.currentToken, "Expect ';' after loop condition.")
+			return nil
+		}
+		p.nextToken()
+	}
+	p.nextToken()
+
+	var iter ast.Expression
+	if p.currentToken.Type != token.RPAREN {
+		iter = p.parseExpression()
+		p.nextToken()
+	}
+
+	if p.currentToken.Type != token.RPAREN {
+		p.parseError(p.currentToken, "Expect ')' after for clauses.")
+		return nil
+	}
+	p.nextToken()
+
+	body := p.parseDeclaration()
+
+	p.endLoop()
+
+	if iter != nil {
+		body = ast.Block{
+			Statements: []ast.Statement{
+				body,
+				ast.ExpressionStatement{Expression: iter},
+			},
+		}
+	}
+	if condition == nil {
+		condition = ast.BooleanLiteral{Value: true}
+	}
+
+	body = ast.While{Condition: condition, Body: body}
+
+	if initializer != nil {
+		body = ast.Block{
+			Statements: []ast.Statement{
+				initializer,
+				body,
+			},
+		}
+	}
+
+	p.endLoop()
+	p.endScope()
+
+	return body
 }
 
 func (p *Parser) parseBlock() ast.Statement {
