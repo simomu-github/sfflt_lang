@@ -824,3 +824,171 @@ func TestParseWhile(t *testing.T) {
 		t.Fatalf("Body value is not match")
 	}
 }
+
+func TestParseFor(t *testing.T) {
+	input := `for (;;) true;`
+	lexer := lexer.New("script", input)
+	parser := New(lexer)
+	stmt := parser.ParseProgram()
+
+	whileStmt, ok := stmt[0].(ast.While)
+	if !ok {
+		t.Fatalf("Statement is not while")
+	}
+
+	condition, ok := whileStmt.Condition.(ast.BooleanLiteral)
+	if !ok {
+		t.Fatalf("condition is not BooleanLiteral")
+	}
+
+	if condition.Value != true {
+		t.Fatalf("condition value is not match")
+	}
+
+	thenStmt, ok := whileStmt.Body.(ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("Body statement is not ExpressionStatement")
+	}
+	thenExpr, ok := thenStmt.Expression.(ast.BooleanLiteral)
+	if !ok {
+		t.Fatalf("Body expression statement is not BooleanLiteral")
+	}
+	if thenExpr.Value != true {
+		t.Fatalf("Body value is not match")
+	}
+}
+
+func TestParseForWithCondition(t *testing.T) {
+	input := `for (;100;) true;`
+	lexer := lexer.New("script", input)
+	parser := New(lexer)
+	stmt := parser.ParseProgram()
+
+	whileStmt, ok := stmt[0].(ast.While)
+	if !ok {
+		t.Fatalf("Statement is not while")
+	}
+
+	condition, ok := whileStmt.Condition.(ast.IntegerLiteral)
+	if !ok {
+		t.Fatalf("condition is not IntegerLiteral")
+	}
+
+	if condition.Value != 100 {
+		t.Fatalf("condition value is not match")
+	}
+
+	thenStmt, ok := whileStmt.Body.(ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("Body statement is not ExpressionStatement")
+	}
+	thenExpr, ok := thenStmt.Expression.(ast.BooleanLiteral)
+	if !ok {
+		t.Fatalf("Body expression statement is not BooleanLiteral")
+	}
+	if thenExpr.Value != true {
+		t.Fatalf("Body value is not match")
+	}
+}
+
+func TestParseForWithInitializer(t *testing.T) {
+	input := `for (var i = 0;;) true;`
+	lexer := lexer.New("script", input)
+	parser := New(lexer)
+	stmt := parser.ParseProgram()
+
+	block, ok := stmt[0].(ast.Block)
+	if !ok {
+		t.Fatalf("Statement is not block")
+	}
+	if len(block.Statements) != 2 {
+		t.Fatalf("Block statements length is not match")
+	}
+
+	_, ok = block.Statements[0].(ast.Var)
+	if !ok {
+		t.Fatalf("Initializer is not Var statement")
+	}
+
+	whileStmt, ok := block.Statements[1].(ast.While)
+	if !ok {
+		t.Fatalf("While statement not found")
+	}
+
+	condition, ok := whileStmt.Condition.(ast.BooleanLiteral)
+	if !ok {
+		t.Fatalf("condition is not BooleanLiteral")
+	}
+
+	if condition.Value != true {
+		t.Fatalf("condition value is not match")
+	}
+
+	thenStmt, ok := whileStmt.Body.(ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("Body statement is not ExpressionStatement")
+	}
+	thenExpr, ok := thenStmt.Expression.(ast.BooleanLiteral)
+	if !ok {
+		t.Fatalf("Body expression statement is not BooleanLiteral")
+	}
+	if thenExpr.Value != true {
+		t.Fatalf("Body value is not match")
+	}
+}
+
+func TestParseForWithIterator(t *testing.T) {
+	input := `for (;;1) true;`
+	lexer := lexer.New("script", input)
+	parser := New(lexer)
+	stmt := parser.ParseProgram()
+
+	whileStmt, ok := stmt[0].(ast.While)
+	if !ok {
+		t.Fatalf("Statement is not while")
+	}
+
+	condition, ok := whileStmt.Condition.(ast.BooleanLiteral)
+	if !ok {
+		t.Fatalf("condition is not BooleanLiteral")
+	}
+
+	if condition.Value != true {
+		t.Fatalf("condition value is not match")
+	}
+
+	body, ok := whileStmt.Body.(ast.Block)
+	if !ok {
+		t.Fatalf("Body statement is not Block")
+	}
+
+	if len(body.Statements) != 2 {
+		t.Fatalf("Block statements length is not match")
+	}
+
+	thenStmt, ok := body.Statements[0].(ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("First statement is not ExpressionStatement")
+	}
+
+	thenExpr, ok := thenStmt.Expression.(ast.BooleanLiteral)
+	if !ok {
+		t.Fatalf("Body expression statement is not BooleanLiteral")
+	}
+	if thenExpr.Value != true {
+		t.Fatalf("Body value is not match")
+	}
+
+	iteratorStmt, ok := body.Statements[1].(ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("Second statement is not ExpressionStatement")
+	}
+
+	iterator, ok := iteratorStmt.Expression.(ast.IntegerLiteral)
+	if !ok {
+		t.Fatalf("Iterator expression statement is not IntegerLiteral")
+	}
+	if iterator.Value != 1 {
+		t.Fatalf("Body value is not match")
+	}
+}
