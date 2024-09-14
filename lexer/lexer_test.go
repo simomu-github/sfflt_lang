@@ -12,7 +12,7 @@ func TestScanToken(t *testing.T) {
 ==
 !=
 <><=>=&&||
-'a'123'\n'
+'a'123'\n'"abc"
 var func if else while for true false return break
 putn putc getn getc hoge_fuga0
 `
@@ -53,6 +53,7 @@ putn putc getn getc hoge_fuga0
 		{token.CHAR, "a", 6, 3},
 		{token.INT, "123", 6, 6},
 		{token.CHAR, "\n", 6, 10},
+		{token.STRING, "abc", 6, 15},
 
 		{token.VAR, "var", 7, 3},
 		{token.FUNC, "func", 7, 8},
