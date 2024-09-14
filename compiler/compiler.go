@@ -365,10 +365,14 @@ func (c *Compiler) VisitCall(e ast.Call) {
 	for _, arg := range e.Arguments {
 		arg.Visit(c)
 	}
-	hash := hashString(e.Callee.Literal)
-	label := intToBinary(FUNCTION_LABEL + hash)
+	if b, ok := buildinFunctions[e.Callee.Literal]; ok {
+		b.f(c)
+	} else {
+		hash := hashString(e.Callee.Literal)
+		label := intToBinary(FUNCTION_LABEL + hash)
 
-	c.addInstructionWithParam(CALLSUB, label)
+		c.addInstructionWithParam(CALLSUB, label)
+	}
 }
 
 func (c *Compiler) VisitIntegerLiteral(e ast.IntegerLiteral) {

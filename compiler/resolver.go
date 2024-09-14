@@ -45,6 +45,16 @@ func (r *Resolver) Resolve() {
 	}
 
 	for name, cf := range r.calledFunctions {
+		if bf, ok := buildinFunctions[name]; ok {
+			if cf.arity != bf.arity {
+				r.resolveError(
+					cf.name,
+					fmt.Sprintf("Expected %d arguments, but got %d.", bf.arity, cf.arity),
+				)
+			}
+			return
+		}
+
 		if df, ok := r.declaredFunctions[name]; ok {
 			if cf.arity != df.arity {
 				r.resolveError(
