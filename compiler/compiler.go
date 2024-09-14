@@ -392,6 +392,28 @@ func (c *Compiler) VisitCharLiteral(e ast.CharLiteral) {
 }
 
 func (c *Compiler) VisitStringLiteral(e ast.StringLiteral) {
+	length := int64(len(e.Token.Literal))
+	capacity := length * 2
+
+	c.allocate(capacity + 2)
+
+	c.addInstruction(DUP)
+	c.addInstructionWithParam(PUSH, POSI+intToBinary(length))
+	c.addInstruction(STORE)
+
+	c.addInstruction(DUP)
+	c.addInstructionWithParam(PUSH, ONE)
+	c.addInstruction(ADD)
+	c.addInstructionWithParam(PUSH, POSI+intToBinary(capacity))
+	c.addInstruction(STORE)
+
+	for i, char := range e.Token.Literal {
+		c.addInstruction(DUP)
+		c.addInstructionWithParam(PUSH, POSI+intToBinary(int64(i+2)))
+		c.addInstruction(ADD)
+		c.addInstructionWithParam(PUSH, POSI+intToBinary(int64(char)))
+		c.addInstruction(STORE)
+	}
 }
 
 func (c *Compiler) VisitBooleanLiteral(e ast.BooleanLiteral) {
