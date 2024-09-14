@@ -120,6 +120,7 @@ func (r *Resolver) VisitCall(e ast.Call) {
 }
 func (r *Resolver) VisitIntegerLiteral(e ast.IntegerLiteral) {}
 func (r *Resolver) VisitCharLiteral(e ast.CharLiteral)       {}
+func (r *Resolver) VisitStringLiteral(e ast.StringLiteral)   {}
 func (r *Resolver) VisitBooleanLiteral(e ast.BooleanLiteral) {}
 func (r *Resolver) VisitVariable(e ast.Variable)             {}
 func (r *Resolver) VisitGet(e ast.Get)                       {}

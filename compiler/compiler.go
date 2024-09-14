@@ -391,6 +391,9 @@ func (c *Compiler) VisitCharLiteral(e ast.CharLiteral) {
 	c.addInstructionWithParam(PUSH, POSI+value)
 }
 
+func (c *Compiler) VisitStringLiteral(e ast.StringLiteral) {
+}
+
 func (c *Compiler) VisitBooleanLiteral(e ast.BooleanLiteral) {
 	if e.Value {
 		c.addInstructionWithParam(PUSH, ONE)

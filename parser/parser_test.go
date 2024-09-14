@@ -126,6 +126,24 @@ func TestParseArray(t *testing.T) {
 	}
 }
 
+func TestParseString(t *testing.T) {
+	input := "\"abc\";"
+	lexer := lexer.New("script", input)
+	parser := New(lexer)
+	stmts := parser.ParseProgram()
+
+	stmt := stmts[0].(ast.ExpressionStatement)
+	stringLiteral, ok := stmt.Expression.(ast.StringLiteral)
+
+	if !ok {
+		t.Fatalf("Not StringLiteral")
+	}
+
+	if stringLiteral.Value != "abc" {
+		t.Fatalf("Value does not match")
+	}
+}
+
 func TestParseArgumentVariable(t *testing.T) {
 	input := "var a = 0; a = 0; f(a, 1, 2); func f(a, b, c) { 1 + b; }"
 	lexer := lexer.New("script", input)

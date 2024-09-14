@@ -114,6 +114,7 @@ type ExpressionVisitor interface {
 	VisitBooleanLiteral(e BooleanLiteral)
 	VisitVariable(e Variable)
 	VisitArrayLiteral(e ArrayLiteral)
+	VisitStringLiteral(e StringLiteral)
 	VisitIndex(i Index)
 	VisitGet(e Get)
 }
@@ -208,6 +209,15 @@ type ArrayLiteral struct {
 
 func (a ArrayLiteral) Visit(visitor ExpressionVisitor) {
 	visitor.VisitArrayLiteral(a)
+}
+
+type StringLiteral struct {
+	Token token.Token
+	Value string
+}
+
+func (s StringLiteral) Visit(visitor ExpressionVisitor) {
+	visitor.VisitStringLiteral(s)
 }
 
 type Index struct {
