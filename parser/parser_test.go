@@ -97,6 +97,35 @@ func TestParsePrimary(t *testing.T) {
 	}
 }
 
+func TestParseArray(t *testing.T) {
+	input := "[1, 2, 3];"
+	lexer := lexer.New("script", input)
+	parser := New(lexer)
+	stmts := parser.ParseProgram()
+
+	stmt := stmts[0].(ast.ExpressionStatement)
+	arrayLiteral, ok := stmt.Expression.(ast.ArrayLiteral)
+
+	if !ok {
+		t.Fatalf("Not ArrayLiteral")
+	}
+
+	element1 := arrayLiteral.Elements[0].(ast.IntegerLiteral)
+	if element1.Value != 1 {
+		t.Fatalf("Array element does not match")
+	}
+
+	element2 := arrayLiteral.Elements[1].(ast.IntegerLiteral)
+	if element2.Value != 2 {
+		t.Fatalf("Array element does not match")
+	}
+
+	element3 := arrayLiteral.Elements[2].(ast.IntegerLiteral)
+	if element3.Value != 3 {
+		t.Fatalf("Array element does not match")
+	}
+}
+
 func TestParseArgumentVariable(t *testing.T) {
 	input := "var a = 0; a = 0; f(a, 1, 2); func f(a, b, c) { 1 + b; }"
 	lexer := lexer.New("script", input)
@@ -313,6 +342,89 @@ func TestParseFactor(t *testing.T) {
 
 	if intLiteral.Value != 3 {
 		t.Fatalf("Right expression does not match")
+	}
+}
+
+func TestParseIndex(t *testing.T) {
+	input := "a[0]"
+	lexer := lexer.New("script", input)
+	parser := New(lexer)
+	expr := parser.parseExpression()
+
+	index, ok := expr.(ast.Index)
+
+	if !ok {
+		t.Fatalf("Not Index")
+	}
+
+	receiver, ok := index.Receiver.(ast.Variable)
+
+	if !ok {
+		t.Fatalf("Left expression does not Variable")
+	}
+
+	if receiver.Identifier.Literal != "a" {
+		t.Fatalf("Receiver expression does not match")
+	}
+
+	i, ok := index.Index.(ast.IntegerLiteral)
+
+	if !ok {
+		t.Fatalf("Index expression does not IntegerLiteral")
+	}
+
+	if i.Value != 0 {
+		t.Fatalf("Index expression does not match")
+	}
+}
+
+func TestParseIndexWithArrayLiteral(t *testing.T) {
+	input := "[1][(1 + 2) * 3]"
+	lexer := lexer.New("script", input)
+	parser := New(lexer)
+	expr := parser.parseExpression()
+
+	index, ok := expr.(ast.Index)
+
+	if !ok {
+		t.Fatalf("Not Index")
+	}
+
+	_, ok = index.Receiver.(ast.ArrayLiteral)
+
+	if !ok {
+		t.Fatalf("Left expression does not Variable")
+	}
+
+	_, ok = index.Index.(ast.Binary)
+
+	if !ok {
+		t.Fatalf("Index expression does not Binary")
+	}
+}
+
+func TestParseIndexWithCall(t *testing.T) {
+	input := "call()[call()]"
+	lexer := lexer.New("script", input)
+	parser := New(lexer)
+	expr := parser.parseExpression()
+
+	index, ok := expr.(ast.Index)
+
+	if !ok {
+		t.Fatalf("Not Index")
+	}
+
+	_, ok = index.Receiver.(ast.Call)
+
+	if !ok {
+		t.Fatalf("Left expression does not Call")
+	}
+
+	_, ok = index.Index.(ast.Call)
+
+	if !ok {
+		t.Fatalf("Index expression does not Call")
 	}
 }
 

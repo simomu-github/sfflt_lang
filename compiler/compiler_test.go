@@ -31,6 +31,48 @@ func TestCompilePrimary(t *testing.T) {
 	assertInstructions(instructions, expects, t)
 }
 
+func TestCompileArrayLiteral(t *testing.T) {
+	input := "[1, 2];"
+	instructions := compile(input, t)
+	expects := []string{
+		// allocate 6
+		"FFFLFFFFFFFFFFFFFFFFFT", // push last heap allocate address
+		"LLL",                    // retrieve
+		"FTF",                    // dup
+		"FFFLLFT",                // push 6 ( length * 2 + 2 )
+		"LFFF",                   // add
+		"FFFLFFFFFFFFFFFFFFFFFT", // push last heap allocate address
+		"FTL",                    // swap
+		"LLF",                    // store
+
+		// setup array
+		"FTF",     // dup
+		"FFFLFT",  // push 2
+		"LLF",     // store
+		"FTF",     // dup
+		"FFFLT",   // push 1
+		"LFFF",    // add
+		"FFFLFFT", // push 4
+		"LLF",     // store
+
+		// array[0]
+		"FTF",    // dup
+		"FFFLFT", // push 2
+		"LFFF",   // add
+		"FFFLT",  // push 1
+		"LLF",    // store
+
+		// array[1]
+		"FTF",    // dup
+		"FFFLLT", // push 3
+		"LFFF",   // add
+		"FFFLFT", // push 1
+		"LLF",    // store
+	}
+
+	assertInstructions(instructions, expects, t)
+}
+
 func TestCompileBang(t *testing.T) {
 	input := "!true;"
 	instructions := compile(input, t)
@@ -56,6 +98,48 @@ func TestCompileCall(t *testing.T) {
 		"FFFLFT",                                 // push 2
 		"FFFLLT",                                 // push 3
 		"TFLLFLLLFFLFFFFFFLLFFFFLFLFFLFFLFLLFFT", // call sub
+	}
+
+	assertInstructions(instructions, expects, t)
+}
+
+func TestCompileIndex(t *testing.T) {
+	input := "[1][0];"
+	instructions := compile(input, t)
+	expects := []string{
+		// allocate 4
+		"FFFLFFFFFFFFFFFFFFFFFT", // push last heap allocate address
+		"LLL",                    // retrieve
+		"FTF",                    // dup
+		"FFFLFFT",                // push 4 ( length * 2 + 2 )
+		"LFFF",                   // add
+		"FFFLFFFFFFFFFFFFFFFFFT", // push last heap allocate address
+		"FTL",                    // swap
+		"LLF",                    // store
+
+		// setup array
+		"FTF",    // dup
+		"FFFLT",  // push 1
+		"LLF",    // store
+		"FTF",    // dup
+		"FFFLT",  // push 1
+		"LFFF",   // add
+		"FFFLFT", // push 2
+		"LLF",    // store
+
+		// assign array[0]
+		"FTF",    // dup
+		"FFFLFT", // push 2
+		"LFFF",   // add
+		"FFFLT",  // push 1
+		"LLF",    // store
+
+		// fetch array[0]
+		"FFFFT",  // push 0
+		"FFFLFT", // push 2
+		"LFFF",   // add
+		"LFFF",   // add
+		"LLL",    // retrieve
 	}
 
 	assertInstructions(instructions, expects, t)
@@ -443,12 +527,27 @@ func compile(input string, t *testing.T) []string {
 }
 
 func assertInstructions(actuals []string, expects []string, t *testing.T) {
-	for i, expect := range expects {
-		if len(actuals) <= i {
-			t.Fatalf("tests[%d] - expected instruction does not exists. expected=%q", i, expect)
-		}
+	// init vm heap instructions
+	if len(actuals) < 3 {
+		t.Fatal("Initialize vm heap instructions do not exists")
+	}
+	initExpects := []string{
+		"FFFLFFFFFFFFFFFFFFFFFT",                  // push last heap allocate address
+		"FFFLLFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFT", // push init heap address
+		"LLF", // store
+	}
+	for i, expect := range initExpects {
 		if actuals[i] != expect {
 			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, actuals[i])
+		}
+	}
+
+	for i, expect := range expects {
+		if len(actuals) <= i+3 {
+			t.Fatalf("tests[%d] - expected instruction does not exists. expected=%q", i, expect)
+		}
+		if actuals[i+3] != expect {
+			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, actuals[i+3])
 		}
 	}
 }

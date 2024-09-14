@@ -7,7 +7,7 @@ import (
 )
 
 func TestScanToken(t *testing.T) {
-	input := `(){},; // this is comment
+	input := `(){}[],; // this is comment
 +-*/%=!
 ==
 !=
@@ -27,8 +27,10 @@ putn putc getn getc hoge_fuga0
 		{token.RPAREN, ")", 1, 2},
 		{token.LBRACE, "{", 1, 3},
 		{token.RBRACE, "}", 1, 4},
-		{token.COMMA, ",", 1, 5},
-		{token.SEMICOLON, ";", 1, 6},
+		{token.LBRACKET, "[", 1, 5},
+		{token.RBRACKET, "]", 1, 6},
+		{token.COMMA, ",", 1, 7},
+		{token.SEMICOLON, ";", 1, 8},
 
 		{token.PLUS, "+", 2, 1},
 		{token.MINUS, "-", 2, 2},

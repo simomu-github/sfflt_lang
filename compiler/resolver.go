@@ -45,6 +45,16 @@ func (r *Resolver) Resolve() {
 	}
 
 	for name, cf := range r.calledFunctions {
+		if bf, ok := buildinFunctions[name]; ok {
+			if cf.arity != bf.arity {
+				r.resolveError(
+					cf.name,
+					fmt.Sprintf("Expected %d arguments, but got %d.", bf.arity, cf.arity),
+				)
+			}
+			return
+		}
+
 		if df, ok := r.declaredFunctions[name]; ok {
 			if cf.arity != df.arity {
 				r.resolveError(
@@ -113,6 +123,17 @@ func (r *Resolver) VisitCharLiteral(e ast.CharLiteral)       {}
 func (r *Resolver) VisitBooleanLiteral(e ast.BooleanLiteral) {}
 func (r *Resolver) VisitVariable(e ast.Variable)             {}
 func (r *Resolver) VisitGet(e ast.Get)                       {}
+
+func (r *Resolver) VisitArrayLiteral(e ast.ArrayLiteral) {
+	for _, element := range e.Elements {
+		element.Visit(r)
+	}
+}
+
+func (r *Resolver) VisitIndex(e ast.Index) {
+	e.Receiver.Visit(r)
+	e.Index.Visit(r)
+}
 
 func (r *Resolver) HadErrors() bool {
 	return len(r.Errors) != 0

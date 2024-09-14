@@ -11,7 +11,8 @@ import (
 const (
 	FUNCTION_LABEL = int64(0b01) << 33
 
-	TMP_ADDR        = int64(0b00)
+	VM_ADDR         = int64(0b00)
+	VM_ALLOC_REC    = int64(0b01) << 17
 	GLOBAL_VAR_ADDR = int64(0b01) << 33
 	LOCAL_VAR_ADDR  = int64(0b10) << 33
 	HEAP_ADDR       = int64(0b11) << 33
@@ -45,6 +46,11 @@ func New(statements []ast.Statement) *Compiler {
 }
 
 func (c *Compiler) Compile() []string {
+	c.addInstructionWithParam(PUSH, POSI+intToBinary(VM_ALLOC_REC))
+	initHeapAddr := HEAP_ADDR + 0
+	c.addInstructionWithParam(PUSH, POSI+intToBinary(initHeapAddr))
+	c.addInstruction(STORE)
+
 	for _, e := range c.statements {
 		e.Visit(c)
 	}
@@ -359,10 +365,14 @@ func (c *Compiler) VisitCall(e ast.Call) {
 	for _, arg := range e.Arguments {
 		arg.Visit(c)
 	}
-	hash := hashString(e.Callee.Literal)
-	label := intToBinary(FUNCTION_LABEL + hash)
+	if b, ok := buildinFunctions[e.Callee.Literal]; ok {
+		b.f(c)
+	} else {
+		hash := hashString(e.Callee.Literal)
+		label := intToBinary(FUNCTION_LABEL + hash)
 
-	c.addInstructionWithParam(CALLSUB, label)
+		c.addInstructionWithParam(CALLSUB, label)
+	}
 }
 
 func (c *Compiler) VisitIntegerLiteral(e ast.IntegerLiteral) {
@@ -419,7 +429,7 @@ func (c *Compiler) localVariable(e ast.Variable) {
 }
 
 func (c *Compiler) VisitGet(s ast.Get) {
-	addr := intToBinary(TMP_ADDR)
+	addr := intToBinary(VM_ADDR)
 	c.addInstructionWithParam(PUSH, POSI+addr)
 	if s.Token.Type == token.GETN {
 		c.addInstruction(GETN)
@@ -428,6 +438,40 @@ func (c *Compiler) VisitGet(s ast.Get) {
 	}
 
 	c.addInstructionWithParam(PUSH, POSI+addr)
+	c.addInstruction(RETRIEVE)
+}
+
+func (c *Compiler) VisitArrayLiteral(e ast.ArrayLiteral) {
+	length := int64(len(e.Elements))
+	capacity := length * 2
+
+	c.allocate(capacity + 2)
+
+	c.addInstruction(DUP)
+	c.addInstructionWithParam(PUSH, POSI+intToBinary(length))
+	c.addInstruction(STORE)
+
+	c.addInstruction(DUP)
+	c.addInstructionWithParam(PUSH, ONE)
+	c.addInstruction(ADD)
+	c.addInstructionWithParam(PUSH, POSI+intToBinary(capacity))
+	c.addInstruction(STORE)
+
+	for i, element := range e.Elements {
+		c.addInstruction(DUP)
+		c.addInstructionWithParam(PUSH, POSI+intToBinary(int64(i+2)))
+		c.addInstruction(ADD)
+		element.Visit(c)
+		c.addInstruction(STORE)
+	}
+}
+
+func (c *Compiler) VisitIndex(e ast.Index) {
+	e.Receiver.Visit(c)
+	e.Index.Visit(c)
+	c.addInstructionWithParam(PUSH, POSI+intToBinary(int64(2)))
+	c.addInstruction(ADD)
+	c.addInstruction(ADD)
 	c.addInstruction(RETRIEVE)
 }
 
@@ -490,6 +534,17 @@ func (c *Compiler) currentLoopBreakPositions() []int {
 
 func (c *Compiler) endLoop() {
 	c.breakPositions = c.breakPositions[:len(c.breakPositions)-1]
+}
+
+func (c *Compiler) allocate(size int64) {
+	c.addInstructionWithParam(PUSH, POSI+intToBinary(VM_ALLOC_REC))
+	c.addInstruction(RETRIEVE)
+	c.addInstruction(DUP)
+	c.addInstructionWithParam(PUSH, POSI+intToBinary(size))
+	c.addInstruction(ADD)
+	c.addInstructionWithParam(PUSH, POSI+intToBinary(VM_ALLOC_REC))
+	c.addInstruction(SWAP)
+	c.addInstruction(STORE)
 }
 
 func intToBinary(value int64) string {

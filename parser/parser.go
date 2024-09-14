@@ -551,7 +551,28 @@ func (p *Parser) parseUnary() ast.Expression {
 		return ast.Unary{Operator: operator, Right: p.parseCall()}
 	}
 
-	return p.parseCall()
+	return p.parseIndex()
+}
+
+func (p *Parser) parseIndex() ast.Expression {
+	expr := p.parseCall()
+	if p.matchPeekToken(token.LBRACKET) {
+		p.nextToken()
+		p.nextToken()
+
+		index := p.parseExpression()
+		p.nextToken()
+
+		if p.currentToken.Type != token.RBRACKET {
+			p.parseError(p.currentToken, "Expect ']' after index.")
+			return nil
+		}
+
+		expr = ast.Index{Receiver: expr, Index: index}
+		p.pushStack()
+	}
+
+	return expr
 }
 
 func (p *Parser) parseCall() ast.Expression {
@@ -601,6 +622,8 @@ func (p *Parser) parsePrimary() ast.Expression {
 	case token.TRUE, token.FALSE:
 		p.pushStack()
 		return ast.BooleanLiteral{Token: p.currentToken, Value: p.currentToken.Type == token.TRUE}
+	case token.LBRACKET:
+		return p.parseArrayLiteral()
 	case token.LPAREN:
 		p.nextToken()
 		expr := p.parseExpression()
@@ -645,6 +668,32 @@ func (p *Parser) parseVariable() ast.Expression {
 	p.pushStack()
 
 	return ast.Variable{Identifier: p.currentToken}
+}
+
+func (p *Parser) parseArrayLiteral() ast.Expression {
+	p.nextToken()
+
+	elements := []ast.Expression{}
+	if p.currentToken.Type != token.RPAREN {
+		for {
+			elements = append(elements, p.parseExpression())
+
+			p.nextToken()
+			if p.currentToken.Type == token.COMMA {
+				p.nextToken()
+			} else {
+				break
+			}
+		}
+	}
+
+	if p.currentToken.Type != token.RBRACKET {
+		p.parseError(p.currentToken, "Expect ']' after array literal.")
+		return nil
+	}
+
+	p.pushStack()
+	return ast.ArrayLiteral{Elements: elements}
 }
 
 func (p *Parser) nextToken() {
