@@ -1,8 +1,9 @@
 package compiler
 
 var buildinFunctions = map[string]*BuildInFunction{
-	"len":  {f: arrayLen, arity: 1},
-	"copy": {f: arrayCopy, arity: 2},
+	"len":    {f: arrayLen, arity: 1},
+	"copy":   {f: arrayCopy, arity: 2},
+	"append": {f: arrayAppend, arity: 2},
 
 	"_allocate":   {f: allocate, arity: 1},
 	"_reallocate": {f: reallocate, arity: 2},
@@ -53,6 +54,66 @@ func arrayCopy(c *Compiler) {
 	c.addInstructionWithParam(PUSH, ZERO)
 	c.addInstructionWithParam(SLIDE, POSI+intToBinary(3))
 
+}
+
+// append(array, element) array
+func arrayAppend(c *Compiler) {
+	c.addInstructionWithParam(COPY, POSI+intToBinary(1)) // array
+	c.addInstructionWithParam(PUSH, ONE)
+	c.addInstruction(ADD)
+	c.addInstruction(RETRIEVE) // capacity
+
+	c.addInstructionWithParam(COPY, POSI+intToBinary(2)) // array
+	c.addInstruction(RETRIEVE)                           // length
+
+	c.addInstructionWithParam(PUSH, ONE)
+	c.addInstruction(ADD)
+	c.addInstruction(SUB) // remain
+	reallocJumpPos := c.reserveJumpLabel(JUMP_WHEN_NEGA)
+
+	c.addInstructionWithParam(COPY, POSI+intToBinary(1)) // array
+	jumpLabelPos := c.reserveJumpLabel(JUMP)
+
+	// reallocate
+	reallocLabel := c.markJumpLabel()
+	c.confirmJumpLabel(reallocJumpPos, reallocLabel)
+
+	c.addInstructionWithParam(COPY, POSI+intToBinary(1)) // array
+
+	c.addInstructionWithParam(COPY, POSI+intToBinary(2)) // array
+	c.addInstructionWithParam(PUSH, ONE)
+	c.addInstruction(ADD)
+	c.addInstruction(RETRIEVE) // capacity
+	c.addInstructionWithParam(PUSH, POSI+intToBinary(2))
+	c.addInstruction(MUL) // new capacity
+
+	// call _reallocate(array, capacity)
+	reallocate(c)
+
+	jumpLabel := c.markJumpLabel()
+	c.confirmJumpLabel(jumpLabelPos, jumpLabel)
+
+	// append
+	c.addInstruction(DUP)
+	c.addInstruction(RETRIEVE) // length
+
+	c.addInstruction(DUP)                                // length
+	c.addInstructionWithParam(COPY, POSI+intToBinary(2)) // array
+	c.addInstruction(SWAP)
+	c.addInstructionWithParam(PUSH, POSI+intToBinary(2))
+	c.addInstruction(ADD)
+	c.addInstruction(ADD)                                // array last
+	c.addInstructionWithParam(COPY, POSI+intToBinary(3)) // element
+	c.addInstruction(STORE)
+
+	c.addInstructionWithParam(PUSH, ONE)
+	c.addInstruction(ADD)
+	c.addInstructionWithParam(COPY, POSI+intToBinary(1)) // new_array
+	c.addInstruction(SWAP)
+	c.addInstruction(STORE) // update array length
+
+	// return
+	c.addInstructionWithParam(SLIDE, POSI+intToBinary(2))
 }
 
 // _memCopy(source, source_index, dist, dist_index)
