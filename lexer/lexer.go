@@ -106,6 +106,8 @@ func (l *Lexer) ScanToken() token.Token {
 		}
 	case '\'':
 		return l.scanChar()
+	case '"':
+		return l.scanString()
 	case 0:
 		return l.makeToken(token.EOF, string(char))
 	default:
@@ -203,6 +205,29 @@ func (l *Lexer) scanChar() token.Token {
 
 	l.readChar()
 	return l.makeToken(token.CHAR, string(char))
+}
+
+func (l *Lexer) scanString() token.Token {
+	var str string
+	for l.peekChar() != '"' && !l.isAtEnd() {
+		char := l.readChar()
+		if char == '\\' {
+			l.readChar()
+			char, err := l.convertEscapeSequence(l.readChar())
+			if err != nil {
+				return l.makeToken(token.ILLEGAL, string(char))
+			}
+		}
+
+		str = str + string(char)
+	}
+
+	if l.peekChar() != '"' {
+		return l.makeToken(token.ILLEGAL, "Unterminated string.")
+	}
+	l.readChar()
+
+	return l.makeToken(token.STRING, str)
 }
 
 func (l *Lexer) scanNumber() token.Token {

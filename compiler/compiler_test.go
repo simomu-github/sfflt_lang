@@ -73,6 +73,55 @@ func TestCompileArrayLiteral(t *testing.T) {
 	assertInstructions(instructions, expects, t)
 }
 
+func TestCompileStringLiteral(t *testing.T) {
+	input := "\"abc\";"
+	instructions := compile(input, t)
+	expects := []string{
+		// allocate 8
+		"FFFLFFFFFFFFFFFFFFFFFT", // push last heap allocate address
+		"LLL",                    // retrieve
+		"FTF",                    // dup
+		"FFFLFFFT",               // push 8 ( length * 2 + 2 )
+		"LFFF",                   // add
+		"FFFLFFFFFFFFFFFFFFFFFT", // push last heap allocate address
+		"FTL",                    // swap
+		"LLF",                    // store
+
+		// setup string
+		"FTF",     // dup
+		"FFFLLT",  // push 3
+		"LLF",     // store
+		"FTF",     // dup
+		"FFFLT",   // push 1
+		"LFFF",    // add
+		"FFFLLFT", // push 6
+		"LLF",     // store
+
+		// str[0] = 'a'
+		"FTF",         // dup
+		"FFFLFT",      // push 2
+		"LFFF",        // add
+		"FFFLLFFFFLT", // push 'a'
+		"LLF",         // store
+
+		// str[1] = 'b'
+		"FTF",         // dup
+		"FFFLLT",      // push 3
+		"LFFF",        // add
+		"FFFLLFFFLFT", // push 'b'
+		"LLF",         // store
+
+		// str[1] = 'c'
+		"FTF",         // dup
+		"FFFLFFT",     // push 3
+		"LFFF",        // add
+		"FFFLLFFFLLT", // push 'c'
+		"LLF",         // store
+	}
+
+	assertInstructions(instructions, expects, t)
+}
+
 func TestCompileBang(t *testing.T) {
 	input := "!true;"
 	instructions := compile(input, t)

@@ -614,6 +614,9 @@ func (p *Parser) parsePrimary() ast.Expression {
 	case token.CHAR:
 		p.pushStack()
 		return ast.CharLiteral{Token: p.currentToken, Value: p.currentToken.Literal}
+	case token.STRING:
+		p.pushStack()
+		return ast.StringLiteral{Token: p.currentToken, Value: p.currentToken.Literal}
 	case token.IDENT:
 		return p.parseVariable()
 	case token.GETC, token.GETN:
