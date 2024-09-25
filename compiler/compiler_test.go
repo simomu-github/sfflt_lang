@@ -355,9 +355,6 @@ func TestCompileGlobalVariableAssign(t *testing.T) {
 		"FFFLT",                                  // push 1
 		"LLF",                                    // store
 
-		"FFFLFLLLFFLFFFFFFLLFFFFLFLFFLFFLFLLFFT", // push "a" address
-		"LLL",                                    // retrieve
-		"FTT",                                    // discard
 		"FFFLFT",                                 // push 2
 		"FTF",                                    // dup
 		"FFFLFLLLFFLFFFFFFLLFFFFLFLFFLFFLFLLFFT", // push "a" address
@@ -378,15 +375,63 @@ func TestCompileAssignLocalVariable(t *testing.T) {
 		"FFFLT", // push 1
 		"LLF",   // store
 
-		"FFFLFFFFFFFFFFFFFFFFFFFFFFFFFLFFFFFFFFT", // push local variable addr (scope 1, index 0)
-		"LLL",    // retrieve
-		"FTT",    // discard
 		"FFFLFT", // push 2
 		"FTF",    // dup
 		"FFFLFFFFFFFFFFFFFFFFFFFFFFFFFLFFFFFFFFT", // push local variable addr (scope 1, index 0)
 		"FTL", // swap
 		"LLF", // store
 		"FTT", // discard
+	}
+
+	assertInstructions(instructions, expects, t)
+}
+
+func TestCompileAssignIndex(t *testing.T) {
+	input := "[1][0] = 2;"
+	instructions := compile(input, t)
+	expects := []string{
+		"FFFLFT", // push 2
+		"FTF",    // dup
+
+		// array literal
+		// allocate 4
+		"FFFLFFFFFFFFFFFFFFFFFT", // push last heap allocate address
+		"LLL",                    // retrieve
+		"FTF",                    // dup
+		"FFFLFFT",                // push 4 ( length * 2 + 2 )
+		"LFFF",                   // add
+		"FFFLFFFFFFFFFFFFFFFFFT", // push last heap allocate address
+		"FTL",                    // swap
+		"LLF",                    // store
+
+		// setup array
+		"FTF",    // dup
+		"FFFLT",  // push 1
+		"LLF",    // store
+		"FTF",    // dup
+		"FFFLT",  // push 1
+		"LFFF",   // add
+		"FFFLFT", // push 2
+		"LLF",    // store
+
+		// assign array[0]
+		"FTF",    // dup
+		"FFFLFT", // push 2
+		"LFFF",   // add
+		"FFFLT",  // push 1
+		"LLF",    // store
+
+		// fetch array[0] address
+		"FFFFT",  // push 0
+		"FFFLFT", // push 2
+		"LFFF",   // add
+		"LFFF",   // add
+
+		"FTL", // swap
+		"LLF", // store
+
+		"FTT", // discard
+
 	}
 
 	assertInstructions(instructions, expects, t)
