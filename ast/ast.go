@@ -119,8 +119,18 @@ type ExpressionVisitor interface {
 	VisitGet(e Get)
 }
 
+type Assignable interface {
+	CanAssign() bool
+	VisitAssign(visitor AssignableVisitor)
+}
+
+type AssignableVisitor interface {
+	VisitAssignToVariable(v Variable)
+	VisitAssignToIndex(i Index)
+}
+
 type Assign struct {
-	Target     Variable
+	Target     Assignable
 	Expression Expression
 }
 
@@ -203,6 +213,12 @@ func (v Variable) Visit(visitor ExpressionVisitor) {
 	visitor.VisitVariable(v)
 }
 
+func (v Variable) CanAssign() bool { return v.Type != ARGUMENT }
+
+func (v Variable) VisitAssign(visitor AssignableVisitor) {
+	visitor.VisitAssignToVariable(v)
+}
+
 type ArrayLiteral struct {
 	Elements []Expression
 }
@@ -227,6 +243,12 @@ type Index struct {
 
 func (i Index) Visit(visitor ExpressionVisitor) {
 	visitor.VisitIndex(i)
+}
+
+func (i Index) CanAssign() bool { return true }
+
+func (i Index) VisitAssign(visitor AssignableVisitor) {
+	visitor.VisitAssignToIndex(i)
 }
 
 type Get struct {
