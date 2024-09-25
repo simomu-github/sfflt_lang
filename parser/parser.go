@@ -439,17 +439,17 @@ func (p *Parser) parseAssign() ast.Expression {
 		p.nextToken()
 		p.nextToken()
 		right := p.parseAssign()
-		variable, ok := expr.(ast.Variable)
+		target, ok := expr.(ast.Assignable)
 		if !ok {
 			p.parseError(p.currentToken, "Invalid assignment target.")
 			return nil
 		}
-		if variable.Type == ast.ARGUMENT {
-			p.parseError(p.currentToken, "Can not assign to argument variable.")
+		if !target.CanAssign() {
+			p.parseError(p.currentToken, "Invalid assignment target.")
 			return nil
 		}
 		p.popStack()
-		return ast.Assign{Target: variable, Expression: right}
+		return ast.Assign{Target: target, Expression: right}
 	}
 
 	return expr
