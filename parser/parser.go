@@ -2,10 +2,13 @@ package parser
 
 import (
 	"fmt"
+	"os"
+	"slices"
 	"strconv"
 
 	"github.com/simomu-github/sfflt_lang/ast"
 	"github.com/simomu-github/sfflt_lang/lexer"
+	"github.com/simomu-github/sfflt_lang/lib"
 	"github.com/simomu-github/sfflt_lang/token"
 )
 
@@ -18,6 +21,7 @@ type Parser struct {
 	stackTop        int
 	scopes          []map[string]*declaredVariable
 	Errors          []string
+	VisitedFiles    []string
 }
 
 type declaredVariable struct {
@@ -36,7 +40,17 @@ const (
 type variableType string
 
 func New(lexer *lexer.Lexer) *Parser {
-	p := &Parser{lexer: lexer, isFunction: false, Errors: []string{}, scopes: []map[string]*declaredVariable{}}
+	return newParser(lexer, []string{})
+}
+
+func newParser(lexer *lexer.Lexer, visitedFiles []string) *Parser {
+	p := &Parser{
+		lexer:        lexer,
+		isFunction:   false,
+		Errors:       []string{},
+		scopes:       []map[string]*declaredVariable{},
+		VisitedFiles: append(visitedFiles, lexer.Filename),
+	}
 	p.nextToken()
 	p.nextToken()
 	return p
@@ -45,6 +59,12 @@ func New(lexer *lexer.Lexer) *Parser {
 func (p *Parser) ParseProgram() []ast.Statement {
 	statements := []ast.Statement{}
 	for p.currentToken.Type != token.EOF {
+		if p.currentToken.Type == token.INCLUDE {
+			stmts := p.parseInclude()
+			if stmts != nil {
+				statements = append(statements, stmts...)
+			}
+		}
 		stmt := p.parseDeclaration()
 		if stmt != nil {
 			statements = append(statements, stmt)
@@ -180,6 +200,41 @@ func (p *Parser) parseFunctionDeclaration() ast.Statement {
 	p.endScope()
 
 	return ast.Function{Name: name, Params: params, Body: body.Statements}
+}
+
+func (p *Parser) parseInclude() []ast.Statement {
+	p.nextToken()
+
+	if p.currentToken.Type != token.STRING {
+		p.parseError(p.currentToken, "Expect include name.")
+		return nil
+	}
+
+	if slices.Contains(p.VisitedFiles, p.currentToken.Literal) {
+		return nil
+	}
+
+	var code string
+	if lib, ok := lib.LookupBuilinLibrary(p.currentToken.Literal); ok {
+		code = lib
+	} else {
+		bytes, err := os.ReadFile(p.currentToken.Literal)
+		if err != nil {
+			p.parseError(p.currentToken, fmt.Sprintf("Including file can not read. (%s)", p.currentToken.Literal))
+			return nil
+		}
+		code = string(bytes)
+	}
+
+	lexer := lexer.New(p.currentToken.Literal, code)
+	parser := newParser(lexer, p.VisitedFiles)
+	statements := parser.ParseProgram()
+	if parser.HadErrors() {
+		p.Errors = append(p.Errors, parser.Errors...)
+	}
+	p.VisitedFiles = parser.VisitedFiles
+
+	return statements
 }
 
 func (p *Parser) parseStatement() ast.Statement {
