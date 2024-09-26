@@ -56,7 +56,7 @@ func Parse(path string) ([]ast.Statement, error) {
 	}
 
 	lexer := lexer.New(path, string(bytes))
-	parser := parser.New(lexer)
+	parser := parser.New(lexer, []string{})
 	statements := parser.ParseProgram()
 	if parser.HadErrors() {
 		for _, err := range parser.Errors {
