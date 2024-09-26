@@ -179,23 +179,30 @@ func (c *Compiler) VisitExpression(s ast.ExpressionStatement) {
 }
 
 func (c *Compiler) VisitAssign(s ast.Assign) {
+	s.Expression.Visit(c)
+	c.addInstruction(DUP)
+	s.Target.VisitAssign(c)
+	c.addInstruction(SWAP)
+	c.addInstruction(STORE)
+}
+
+func (c *Compiler) VisitAssignToVariable(v ast.Variable) {
 	addr := ""
-	if s.Target.Type == ast.LOCAL {
-		addr = intToBinary(LOCAL_VAR_ADDR + int64(s.Target.ScopeDepth<<LOCAL_VAR_SCOPE_SHIFT) + int64(s.Target.LocalIndex))
+	if v.Type == ast.LOCAL {
+		addr = intToBinary(LOCAL_VAR_ADDR + int64(v.ScopeDepth<<LOCAL_VAR_SCOPE_SHIFT) + int64(v.LocalIndex))
 	} else {
-		hash := hashString(s.Target.Identifier.Literal)
+		hash := hashString(v.Identifier.Literal)
 		addr = intToBinary(GLOBAL_VAR_ADDR + hash)
 	}
 	c.addInstructionWithParam(PUSH, POSI+addr)
-	c.addInstruction(RETRIEVE)
+}
 
-	c.addInstruction(DISCARD)
-
-	s.Expression.Visit(c)
-	c.addInstruction(DUP)
-	c.addInstructionWithParam(PUSH, POSI+addr)
-	c.addInstruction(SWAP)
-	c.addInstruction(STORE)
+func (c *Compiler) VisitAssignToIndex(i ast.Index) {
+	i.Receiver.Visit(c)
+	i.Index.Visit(c)
+	c.addInstructionWithParam(PUSH, POSI+intToBinary(int64(2)))
+	c.addInstruction(ADD)
+	c.addInstruction(ADD)
 }
 
 func (c *Compiler) VisitBinaryExpression(e ast.Binary) {

@@ -757,7 +757,11 @@ func TestParseAssign(t *testing.T) {
 		t.Fatalf("Statement is not Assign")
 	}
 
-	target := assign.Target
+	target, ok := assign.Target.(ast.Variable)
+	if !ok {
+		t.Fatalf("Target is not Variable")
+	}
+
 	if target.Identifier.Literal != "a" {
 		t.Fatalf("Target literal is not match")
 	}
@@ -767,7 +771,11 @@ func TestParseAssign(t *testing.T) {
 		t.Fatalf("assign expression it not assign")
 	}
 
-	target = right.Target
+	target, ok = right.Target.(ast.Variable)
+	if !ok {
+		t.Fatalf("Target is not Variable")
+	}
+
 	if target.Identifier.Literal != "b" {
 		t.Fatalf("Target literal is not match")
 	}
@@ -777,6 +785,50 @@ func TestParseAssign(t *testing.T) {
 		t.Fatalf("assign expression is not IntegerLiteral")
 	}
 	if rr.Value != 2 {
+		t.Fatalf("assign value is not match")
+	}
+}
+
+func TestParseAssignToIndex(t *testing.T) {
+	input := "a[0] = 2"
+	lexer := lexer.New("script", input)
+	parser := New(lexer)
+	expr := parser.parseExpression()
+
+	assign, ok := expr.(ast.Assign)
+	if !ok {
+		t.Fatalf("Statement is not Assign")
+	}
+
+	target, ok := assign.Target.(ast.Index)
+	if !ok {
+		t.Fatalf("Target is not Index")
+	}
+	receiver, ok := target.Receiver.(ast.Variable)
+
+	if !ok {
+		t.Fatalf("Left expression does not Variable")
+	}
+
+	if receiver.Identifier.Literal != "a" {
+		t.Fatalf("Receiver expression does not match")
+	}
+
+	i, ok := target.Index.(ast.IntegerLiteral)
+
+	if !ok {
+		t.Fatalf("Index expression does not IntegerLiteral")
+	}
+
+	if i.Value != 0 {
+		t.Fatalf("Index expression does not match")
+	}
+
+	right, ok := assign.Expression.(ast.IntegerLiteral)
+	if !ok {
+		t.Fatalf("assign expression is not IntegerLiteral")
+	}
+	if right.Value != 2 {
 		t.Fatalf("assign value is not match")
 	}
 }
