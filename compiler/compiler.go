@@ -114,7 +114,12 @@ func (c *Compiler) VisitPut(s ast.PutStatement) {
 }
 
 func (c *Compiler) VisitReturn(s ast.Return) {
-	s.Value.Visit(c)
+	if s.Value == nil {
+		c.addInstructionWithParam(PUSH, ZERO)
+	} else {
+		s.Value.Visit(c)
+	}
+
 	if c.compilingFunction.ParamCount != 0 {
 		slideLength := intToBinary(int64(c.compilingFunction.ParamCount))
 		c.addInstructionWithParam(SLIDE, POSI+slideLength)

@@ -245,6 +245,11 @@ func (p *Parser) parseReturn() ast.Statement {
 		return nil
 	}
 
+	if p.peekToken.Type == token.SEMICOLON {
+		p.nextToken()
+		return ast.Return{Value: nil}
+	}
+
 	p.nextToken()
 	expr := p.parseExpression()
 	if p.peekToken.Type != token.SEMICOLON {
