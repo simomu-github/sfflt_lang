@@ -85,8 +85,12 @@ func (r *Resolver) VisitFunction(s ast.Function) {
 	}
 }
 func (r *Resolver) VisitPut(s ast.PutStatement) { s.Expression.Visit(r) }
-func (r *Resolver) VisitReturn(s ast.Return)    { s.Value.Visit(r) }
-func (r *Resolver) VisitBreak(s ast.Break)      {}
+func (r *Resolver) VisitReturn(s ast.Return) {
+	if s.Value != nil {
+		s.Value.Visit(r)
+	}
+}
+func (r *Resolver) VisitBreak(s ast.Break) {}
 func (r *Resolver) VisitIf(s ast.If) {
 	s.Condition.Visit(r)
 	s.Then.Visit(r)

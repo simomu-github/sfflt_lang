@@ -582,6 +582,28 @@ func TestCompileReturn(t *testing.T) {
 	assertInstructions(instructions, expects, t)
 }
 
+func TestCompileEmptyReturn(t *testing.T) {
+	input := "func a() { return; } a();"
+	lexer := lexer.New("script", input)
+	parser := parser.New(lexer)
+	exprs := parser.ParseProgram()
+	compiler := New(exprs)
+
+	instructions := compiler.Compile()
+	expects := []string{
+		"TFLLFLLLFFLFFFFFFLLFFFFLFLFFLFFLFLLFFT",
+		"FTT",
+		"TTT",
+		"TFFLFLLLFFLFFFFFFLLFFFFLFLFFLFFLFLLFFT",
+		"FFFFT",
+		"TLT",
+		"FFFFT",
+		"TLT",
+	}
+
+	assertInstructions(instructions, expects, t)
+}
+
 func TestCompileBreak(t *testing.T) {
 	input := "while(true) { while(true) { break; } break; }"
 	instructions := compile(input, t)

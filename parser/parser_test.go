@@ -722,6 +722,28 @@ func TestParseReturn(t *testing.T) {
 	}
 }
 
+func TestParseEmptyReturn(t *testing.T) {
+	input := "func test() { return; }"
+	lexer := lexer.New("script", input)
+	parser := New(lexer)
+	stmt := parser.ParseProgram()
+
+	funcStmt, ok := stmt[0].(ast.Function)
+	if !ok {
+		t.Fatalf("Statement is not function")
+	}
+
+	r, ok := funcStmt.Body[0].(ast.Return)
+
+	if !ok {
+		t.Fatalf("Body is not Return")
+	}
+
+	if r.Value != nil {
+		t.Fatalf("Expression is not empty")
+	}
+}
+
 func TestParseBreak(t *testing.T) {
 	input := "while(true) break;"
 	lexer := lexer.New("script", input)
