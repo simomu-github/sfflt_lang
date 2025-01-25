@@ -66,11 +66,11 @@ func (p *Parser) parseDeclaration() ast.Statement {
 		}
 	}()
 
-	if p.currentToken.Type == token.VAR {
+	if p.matchToken(token.VAR) {
 		return p.parseVarDeclaration()
 	}
 
-	if p.currentToken.Type == token.FUNC {
+	if p.matchToken(token.FUNC) {
 		return p.parseFunctionDeclaration()
 	}
 
@@ -78,7 +78,6 @@ func (p *Parser) parseDeclaration() ast.Statement {
 }
 
 func (p *Parser) parseVarDeclaration() ast.Statement {
-	p.nextToken()
 	if p.currentToken.Type != token.IDENT {
 		p.parseError(p.currentToken, "Expect identifier.")
 		return nil
@@ -87,11 +86,10 @@ func (p *Parser) parseVarDeclaration() ast.Statement {
 	local := p.declareLocalVariable(identifier)
 	p.nextToken()
 
-	if p.currentToken.Type != token.ASSIGN {
+	if !p.matchToken(token.ASSIGN) {
 		p.parseError(p.currentToken, "Expect '=' after identifier.")
 		return nil
 	}
-	p.nextToken()
 
 	expr := p.parseExpression()
 	p.markInitializedVariable(identifier)
@@ -128,7 +126,6 @@ func (p *Parser) parseFunctionDeclaration() ast.Statement {
 
 	p.beginScope()
 	p.isFunction = true
-	p.nextToken()
 
 	if p.currentToken.Type != token.IDENT {
 		p.parseError(p.currentToken, "Expect function name.")
@@ -137,11 +134,10 @@ func (p *Parser) parseFunctionDeclaration() ast.Statement {
 	name := p.currentToken
 	p.nextToken()
 
-	if p.currentToken.Type != token.LPAREN {
+	if !p.matchToken(token.LPAREN) {
 		p.parseError(p.currentToken, "Expect '(' after function name.")
 		return nil
 	}
-	p.nextToken()
 
 	params := []token.Token{}
 	if p.currentToken.Type != token.RPAREN {
@@ -155,21 +151,18 @@ func (p *Parser) parseFunctionDeclaration() ast.Statement {
 			p.declareArgumentVariable(p.currentToken, len(params))
 
 			p.nextToken()
-			if p.currentToken.Type == token.COMMA {
-				p.nextToken()
-			} else {
+			if !p.matchToken(token.COMMA) {
 				break
 			}
 		}
 	}
 
-	if p.currentToken.Type != token.RPAREN {
+	if !p.matchToken(token.RPAREN) {
 		p.parseError(p.currentToken, "Expect ')' after parameters.")
 		return nil
 	}
-	p.nextToken()
 
-	if p.currentToken.Type != token.LBRACE {
+	if !p.matchToken(token.LBRACE) {
 		p.parseError(p.currentToken, "Expect '{' before function body.")
 		return nil
 	}
@@ -188,19 +181,19 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parsePutStatement()
 	}
 
-	if p.currentToken.Type == token.IF {
+	if p.matchToken(token.IF) {
 		return p.parseIf()
 	}
 
-	if p.currentToken.Type == token.WHILE {
+	if p.matchToken(token.WHILE) {
 		return p.parseWhile()
 	}
 
-	if p.currentToken.Type == token.FOR {
+	if p.matchToken(token.FOR) {
 		return p.parseFor()
 	}
 
-	if p.currentToken.Type == token.LBRACE {
+	if p.matchToken(token.LBRACE) {
 		return p.parseBlock()
 	}
 
@@ -278,7 +271,6 @@ func (p *Parser) parseBreak() ast.Statement {
 }
 
 func (p *Parser) parseIf() ast.Statement {
-	p.nextToken()
 	if p.currentToken.Type != token.LPAREN {
 		p.parseError(p.currentToken, "Expect '(' after if.")
 		return nil
@@ -308,7 +300,6 @@ func (p *Parser) parseIf() ast.Statement {
 func (p *Parser) parseWhile() ast.Statement {
 	p.beginLoop()
 
-	p.nextToken()
 	if p.currentToken.Type != token.LPAREN {
 		p.parseError(p.currentToken, "Expect '(' after while.")
 		return nil
@@ -334,7 +325,6 @@ func (p *Parser) parseFor() ast.Statement {
 	p.beginScope()
 	p.beginLoop()
 
-	p.nextToken()
 	if p.currentToken.Type != token.LPAREN {
 		p.parseError(p.currentToken, "Expect '(' after while.")
 		return nil
@@ -344,7 +334,7 @@ func (p *Parser) parseFor() ast.Statement {
 	var initializer ast.Statement
 	if p.currentToken.Type == token.SEMICOLON {
 		initializer = nil
-	} else if p.currentToken.Type == token.VAR {
+	} else if p.matchToken(token.VAR) {
 		initializer = p.parseVarDeclaration()
 	} else {
 		expr := p.parseExpression()
@@ -415,7 +405,6 @@ func (p *Parser) parseFor() ast.Statement {
 
 func (p *Parser) parseBlock() ast.Statement {
 	p.beginScope()
-	p.nextToken()
 	stmts := []ast.Statement{}
 	for p.currentToken.Type != token.RBRACE {
 		if p.currentToken.Type == token.EOF {
@@ -707,6 +696,18 @@ func (p *Parser) parseArrayLiteral() ast.Expression {
 func (p *Parser) nextToken() {
 	p.currentToken = p.peekToken
 	p.peekToken = p.lexer.ScanToken()
+}
+
+func (p *Parser) matchToken(types ...token.TokenType) bool {
+	for _, typ := range types {
+		if p.currentToken.Type == typ {
+			p.nextToken()
+			return true
+		}
+
+	}
+
+	return false
 }
 
 func (p *Parser) matchPeekToken(types ...token.TokenType) bool {
