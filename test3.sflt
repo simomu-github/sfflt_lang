@@ -1,0 +1,2 @@
+include "test.sflt";
+var a = 0;
