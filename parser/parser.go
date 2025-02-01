@@ -94,11 +94,10 @@ func (p *Parser) parseVarDeclaration() ast.Statement {
 	expr := p.parseExpression()
 	p.markInitializedVariable(identifier)
 
-	if p.peekToken.Type != token.SEMICOLON {
+	if p.currentToken.Type != token.SEMICOLON {
 		p.parseError(p.currentToken, "Expect ';' after statement.")
 		return nil
 	}
-	p.nextToken()
 
 	isLocal := false
 	depth := 0
@@ -210,11 +209,10 @@ func (p *Parser) parseStatement() ast.Statement {
 		return nil
 	}
 
-	if p.peekToken.Type != token.SEMICOLON {
+	if p.currentToken.Type != token.SEMICOLON {
 		p.parseError(p.currentToken, "Expect ';' after statement.")
 		return nil
 	}
-	p.nextToken()
 
 	return ast.ExpressionStatement{Expression: expr}
 }
@@ -223,11 +221,10 @@ func (p *Parser) parsePutStatement() ast.Statement {
 	tok := p.currentToken
 	p.nextToken()
 	expr := p.parseExpression()
-	if p.peekToken.Type != token.SEMICOLON {
+	if p.currentToken.Type != token.SEMICOLON {
 		p.parseError(p.currentToken, "Expect ';' after statement.")
 		return nil
 	}
-	p.nextToken()
 
 	return ast.PutStatement{Token: tok, Expression: expr}
 }
@@ -245,11 +242,10 @@ func (p *Parser) parseReturn() ast.Statement {
 
 	p.nextToken()
 	expr := p.parseExpression()
-	if p.peekToken.Type != token.SEMICOLON {
+	if p.currentToken.Type != token.SEMICOLON {
 		p.parseError(p.currentToken, "Expect ';' after statement.")
 		return nil
 	}
-	p.nextToken()
 
 	return ast.Return{Value: expr}
 }
@@ -278,7 +274,6 @@ func (p *Parser) parseIf() ast.Statement {
 	p.nextToken()
 
 	condition := p.parseExpression()
-	p.nextToken()
 
 	if p.currentToken.Type != token.RPAREN {
 		p.parseError(p.currentToken, "Expect ')' after if condition.")
@@ -307,7 +302,6 @@ func (p *Parser) parseWhile() ast.Statement {
 	p.nextToken()
 
 	condition := p.parseExpression()
-	p.nextToken()
 
 	if p.currentToken.Type != token.RPAREN {
 		p.parseError(p.currentToken, "Expect ')' after while condition.")
@@ -338,11 +332,10 @@ func (p *Parser) parseFor() ast.Statement {
 		initializer = p.parseVarDeclaration()
 	} else {
 		expr := p.parseExpression()
-		if p.peekToken.Type != token.SEMICOLON {
+		if p.currentToken.Type != token.SEMICOLON {
 			p.parseError(p.currentToken, "Expect ';' after for initialzier.")
 			return nil
 		}
-		p.nextToken()
 		initializer = ast.ExpressionStatement{Expression: expr}
 	}
 	p.nextToken()
@@ -350,18 +343,16 @@ func (p *Parser) parseFor() ast.Statement {
 	var condition ast.Expression
 	if p.currentToken.Type != token.SEMICOLON {
 		condition = p.parseExpression()
-		if p.peekToken.Type != token.SEMICOLON {
+		if p.currentToken.Type != token.SEMICOLON {
 			p.parseError(p.currentToken, "Expect ';' after loop condition.")
 			return nil
 		}
-		p.nextToken()
 	}
 	p.nextToken()
 
 	var iter ast.Expression
 	if p.currentToken.Type != token.RPAREN {
 		iter = p.parseExpression()
-		p.nextToken()
 	}
 
 	if p.currentToken.Type != token.RPAREN {
@@ -422,6 +413,7 @@ func (p *Parser) parseBlock() ast.Statement {
 func (p *Parser) parseExpression() ast.Expression {
 	expr := p.parseAssign()
 	p.popStack()
+	p.nextToken()
 	return expr
 }
 
@@ -555,7 +547,6 @@ func (p *Parser) parseIndex() ast.Expression {
 		p.nextToken()
 
 		index := p.parseExpression()
-		p.nextToken()
 
 		if p.currentToken.Type != token.RBRACKET {
 			p.parseError(p.currentToken, "Expect ']' after index.")
@@ -581,10 +572,7 @@ func (p *Parser) parseCall() ast.Expression {
 			for {
 				arguments = append(arguments, p.parseExpression())
 
-				p.nextToken()
-				if p.currentToken.Type == token.COMMA {
-					p.nextToken()
-				} else {
+				if !p.matchToken(token.COMMA) {
 					break
 				}
 			}
@@ -619,12 +607,14 @@ func (p *Parser) parsePrimary() ast.Expression {
 	case token.TRUE, token.FALSE:
 		p.pushStack()
 		return ast.BooleanLiteral{Token: p.currentToken, Value: p.currentToken.Type == token.TRUE}
-	case token.LBRACKET:
+	}
+
+	if p.matchToken(token.LBRACKET) {
 		return p.parseArrayLiteral()
-	case token.LPAREN:
-		p.nextToken()
+	}
+
+	if p.matchToken(token.LPAREN) {
 		expr := p.parseExpression()
-		p.nextToken()
 		if p.currentToken.Type != token.RPAREN {
 			p.parseError(p.currentToken, "Expect ')' after expression.")
 			return nil
@@ -668,17 +658,12 @@ func (p *Parser) parseVariable() ast.Expression {
 }
 
 func (p *Parser) parseArrayLiteral() ast.Expression {
-	p.nextToken()
-
 	elements := []ast.Expression{}
 	if p.currentToken.Type != token.RPAREN {
 		for {
 			elements = append(elements, p.parseExpression())
 
-			p.nextToken()
-			if p.currentToken.Type == token.COMMA {
-				p.nextToken()
-			} else {
+			if !p.matchToken(token.COMMA) {
 				break
 			}
 		}
