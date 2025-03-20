@@ -14,7 +14,7 @@ func TestScanToken(t *testing.T) {
 <><=>=&&||
 'a'123'\n'"abc"
 var func if else while for true false return break
-putn putc getn getc hoge_fuga0
+putn putc getn getc include hoge_fuga0
 `
 
 	expects := []struct {
@@ -70,7 +70,8 @@ putn putc getn getc hoge_fuga0
 		{token.PUTC, "putc", 8, 9},
 		{token.GETN, "getn", 8, 14},
 		{token.GETC, "getc", 8, 19},
-		{token.IDENT, "hoge_fuga0", 8, 30},
+		{token.INCLUDE, "include", 8, 27},
+		{token.IDENT, "hoge_fuga0", 8, 38},
 
 		{token.EOF, string(byte(0)), 9, 0},
 	}

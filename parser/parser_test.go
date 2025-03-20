@@ -1196,3 +1196,25 @@ func TestParseForWithIterator(t *testing.T) {
 		t.Fatalf("Body value is not match")
 	}
 }
+
+func TestParseInclude(t *testing.T) {
+	input := `include "../fixtures/include.sflt";`
+	lexer := lexer.New("script", input)
+	parser := New(lexer)
+	stmts := parser.ParseProgram()
+
+	stmt := stmts[0].(ast.ExpressionStatement)
+	intLiteral, ok := stmt.Expression.(ast.IntegerLiteral)
+
+	if !ok {
+		t.Fatalf("Not IntegerLiteral")
+	}
+
+	if intLiteral.Token.Type != token.INT {
+		t.Fatalf("TokenType not INT")
+	}
+
+	if intLiteral.Value != 1 {
+		t.Fatalf("Value does not match")
+	}
+}

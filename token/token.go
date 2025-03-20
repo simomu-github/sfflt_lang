@@ -54,6 +54,8 @@ const (
 
 	GETN = "GETN"
 	GETC = "GETC"
+
+	INCLUDE = "INCLUDE"
 )
 
 type TokenType string
@@ -77,10 +79,11 @@ var keywords = map[string]TokenType{
 	"return": RETURN,
 	"break":  BREAK,
 
-	"putn": PUTN,
-	"putc": PUTC,
-	"getn": GETN,
-	"getc": GETC,
+	"putn":    PUTN,
+	"putc":    PUTC,
+	"getn":    GETN,
+	"getc":    GETC,
+	"include": INCLUDE,
 }
 
 func LookupIdent(ident string) TokenType {
