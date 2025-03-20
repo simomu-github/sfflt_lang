@@ -68,6 +68,14 @@ fflt_lang fibonacci.fflt
 
 `'a'`, `'\n'`, ...
 
+#### String literal
+
+`"Hello World!"`, `"One\nTwo\n"`, ...
+
+#### Array literal
+
+`[123, 456]`, `['a', 'b', 'c']`, ...
+
 #### Boolean literal
 
 `true` or `false`
@@ -132,12 +140,10 @@ Support short-circuit evaluation.
 #### Expression statement
 
 ```
-<expression>
+<expression>;
 ```
 
 #### Variable declaration
-
-Support only global variable.
 
 ```
 var <identifier> = <expression>;
@@ -179,6 +185,24 @@ while (<expression>) {
 }
 ```
 
+#### For statement
+
+```
+for (<declaration>;<expression>;<expression>) {
+  <statement>
+
+  // Support break statement
+  break;
+}
+```
+
+#### include statement
+
+```
+include "./path/to/other_file.sflt";
+include "strings" // Load standard library.
+```
+
 ### I/O
 
 #### stdout
@@ -209,15 +233,50 @@ Read character.
 var character = getc;
 ```
 
+### Build in functions
+
+#### len
+
+Get the length of an array.
+
+```
+len([1, 2, 3]);
+```
+
+#### append
+
+Appending elements to an array.
+
+```
+var array = [1, 2, 3];
+append(array, 4);
+```
+
+### Standard library
+
+
+#### `strings`
+
+- `println`
+
+Write string with new line.
+
+```
+include "strings";
+
+println("Hello World!");
+```
+
+
 ### Comment
 
 ```
 // This is comment
 ```
 
+
 ## TODO
 
-- Local variable
-- Array
-- String
+- Static typing
+- Memory management
 ...
