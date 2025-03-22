@@ -20,7 +20,7 @@ var (
 	formatOpt  = flag.String("format", "64", "output code format. [oneline, pretty, (number of column)]")
 )
 
-const version = "v0.0.1"
+const version = "v0.0.2"
 
 func main() {
 	flag.Usage = func() {
