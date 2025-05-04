@@ -607,7 +607,6 @@ func (p *Parser) parseIndex() ast.Expression {
 		}
 
 		expr = ast.Index{Receiver: expr, Index: index}
-		p.pushStack()
 	}
 
 	return expr
