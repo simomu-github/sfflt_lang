@@ -95,6 +95,10 @@ func TestParsePrimary(t *testing.T) {
 	if get.Token.Type != token.GETC {
 		t.Fatalf("token type is not match")
 	}
+
+	if parser.stackTop != 0 {
+		t.Fatalf("Parser's stack top does not match")
+	}
 }
 
 func TestParseArray(t *testing.T) {
@@ -287,6 +291,10 @@ func TestCall(t *testing.T) {
 	if second.Value != 2 {
 		t.Fatalf("Second arguments is not match")
 	}
+
+	if parser.stackTop == 1 {
+		t.Fatalf("Parser's stack top does not match")
+	}
 }
 
 func TestParseUnary(t *testing.T) {
@@ -313,6 +321,10 @@ func TestParseUnary(t *testing.T) {
 
 	if intLiteral.Value != 123 {
 		t.Fatalf("Right expression does not match")
+	}
+
+	if parser.stackTop == 1 {
+		t.Fatalf("Parser's stack top does not match")
 	}
 }
 
@@ -361,6 +373,10 @@ func TestParseFactor(t *testing.T) {
 	if intLiteral.Value != 3 {
 		t.Fatalf("Right expression does not match")
 	}
+
+	if parser.stackTop == 1 {
+		t.Fatalf("Parser's stack top does not match")
+	}
 }
 
 func TestParseIndex(t *testing.T) {
@@ -394,6 +410,10 @@ func TestParseIndex(t *testing.T) {
 	if i.Value != 0 {
 		t.Fatalf("Index expression does not match")
 	}
+
+	if parser.stackTop == 1 {
+		t.Fatalf("Parser's stack top does not match")
+	}
 }
 
 func TestParseIndexWithArrayLiteral(t *testing.T) {
@@ -419,6 +439,10 @@ func TestParseIndexWithArrayLiteral(t *testing.T) {
 	if !ok {
 		t.Fatalf("Index expression does not Binary")
 	}
+
+	if parser.stackTop == 1 {
+		t.Fatalf("Parser's stack top does not match")
+	}
 }
 
 func TestParseIndexWithCall(t *testing.T) {
@@ -443,6 +467,10 @@ func TestParseIndexWithCall(t *testing.T) {
 
 	if !ok {
 		t.Fatalf("Index expression does not Call")
+	}
+
+	if parser.stackTop == 1 {
+		t.Fatalf("Parser's stack top does not match")
 	}
 }
 
@@ -517,6 +545,10 @@ func TestParseTerm(t *testing.T) {
 	if rr.Value != 1 {
 		t.Fatalf("Right right expression value does not match")
 	}
+
+	if parser.stackTop == 1 {
+		t.Fatalf("Parser's stack top does not match")
+	}
 }
 
 func TestParseComparison(t *testing.T) {
@@ -572,6 +604,10 @@ func TestParseComparison(t *testing.T) {
 	if right.Identifier.Literal != "c" {
 		t.Fatalf("Right variable identifier does not match")
 	}
+
+	if parser.stackTop == 1 {
+		t.Fatalf("Parser's stack top does not match")
+	}
 }
 
 func TestParseEquality(t *testing.T) {
@@ -608,6 +644,10 @@ func TestParseEquality(t *testing.T) {
 
 	if right.Value != false {
 		t.Fatalf("Right expression value not match")
+	}
+
+	if parser.stackTop == 1 {
+		t.Fatalf("Parser's stack top does not match")
 	}
 }
 
@@ -665,6 +705,10 @@ func TestParseAndOr(t *testing.T) {
 
 	if ll.Value != true {
 		t.Fatalf("Right right expression value not match")
+	}
+
+	if parser.stackTop == 1 {
+		t.Fatalf("Parser's stack top does not match")
 	}
 }
 
