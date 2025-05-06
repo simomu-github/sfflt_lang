@@ -111,6 +111,8 @@ func (p *Parser) parseVarDeclaration() ast.Statement {
 		return nil
 	}
 
+	p.pushStack()
+
 	expr := p.parseExpression()
 	p.markInitializedVariable(identifier)
 
@@ -118,6 +120,8 @@ func (p *Parser) parseVarDeclaration() ast.Statement {
 		p.parseError(p.currentToken, "Expect ';' after statement.")
 		return nil
 	}
+
+	p.popStack()
 
 	isLocal := false
 	depth := 0
