@@ -184,11 +184,11 @@ func (c *Compiler) VisitExpression(s ast.ExpressionStatement) {
 }
 
 func (c *Compiler) VisitAssign(s ast.Assign) {
-	s.Expression.Visit(c)
-	c.addInstruction(DUP)
 	s.Target.VisitAssign(c)
-	c.addInstruction(SWAP)
+	c.addInstruction(DUP)
+	s.Expression.Visit(c)
 	c.addInstruction(STORE)
+	c.addInstruction(RETRIEVE)
 }
 
 func (c *Compiler) VisitAssignToVariable(v ast.Variable) {
