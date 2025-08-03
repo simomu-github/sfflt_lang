@@ -959,6 +959,48 @@ func TestParseFunction(t *testing.T) {
 	}
 }
 
+func TestParseFunctionWithCall(t *testing.T) {
+	input := "func test1(a, b) { test2(a, b); }"
+	lexer := lexer.New("script", input)
+	parser := New(lexer)
+	stmt := parser.ParseProgram()
+
+	funcStmt, ok := stmt[0].(ast.Function)
+	expStmt, ok := funcStmt.Body[0].(ast.ExpressionStatement)
+
+	if !ok {
+		t.Fatalf("Body is not ExpressionStatement")
+	}
+
+	exp := expStmt.Expression
+	call, ok := exp.(ast.Call)
+	if !ok {
+		t.Fatalf("Not Call")
+	}
+
+	first, ok := call.Arguments[0].(ast.Variable)
+	if !ok {
+		t.Fatalf("First arguments is not variable")
+	}
+
+	if first.RelativeIndex != 0 {
+		t.Fatalf("First argument's relative index is not match")
+	}
+
+	second, ok := call.Arguments[1].(ast.Variable)
+	if !ok {
+		t.Fatalf("Second arguments is not variable")
+	}
+
+	if second.RelativeIndex != 1 {
+		t.Fatalf("Second argument's relative index is not match")
+	}
+
+	if parser.stackTop != 0 {
+		t.Fatalf("Parser's stack top does not match")
+	}
+}
+
 func TestParseBlock(t *testing.T) {
 	input := "{ a; b; }"
 	lexer := lexer.New("script", input)
