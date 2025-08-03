@@ -631,6 +631,7 @@ func (p *Parser) parseCall() ast.Expression {
 		if p.currentToken.Type != token.RPAREN {
 			for {
 				arguments = append(arguments, p.parseExpression())
+				p.pushStack()
 
 				if !p.matchToken(token.COMMA) {
 					break
