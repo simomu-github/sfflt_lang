@@ -479,6 +479,8 @@ func (p *Parser) parseAssign() ast.Expression {
 
 	switch p.peekToken.Type {
 	case token.ASSIGN:
+		targetToken := p.currentToken
+
 		p.nextToken()
 		p.nextToken()
 
@@ -486,11 +488,11 @@ func (p *Parser) parseAssign() ast.Expression {
 		right := p.parseAssign()
 		target, ok := expr.(ast.Assignable)
 		if !ok {
-			p.parseError(p.currentToken, "Invalid assignment target.")
+			p.parseError(targetToken, "Invalid assignment target.")
 			return nil
 		}
 		if !target.CanAssign() {
-			p.parseError(p.currentToken, "Invalid assignment target.")
+			p.parseError(targetToken, "Invalid assignment target.")
 			return nil
 		}
 		p.popStack()
