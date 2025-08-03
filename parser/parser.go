@@ -643,6 +643,7 @@ func (p *Parser) parseCall() ast.Expression {
 			p.parseError(p.currentToken, "Expect ')' after arguments.")
 			return nil
 		}
+		p.discardStack(len(arguments))
 		p.pushStack()
 		return ast.Call{Callee: callee, Arguments: arguments}
 	}
@@ -785,6 +786,10 @@ func (p *Parser) pushStack() {
 
 func (p *Parser) popStack() {
 	p.stackTop--
+}
+
+func (p *Parser) discardStack(n int) {
+	p.stackTop -= n
 }
 
 func (p *Parser) beginScope() {
