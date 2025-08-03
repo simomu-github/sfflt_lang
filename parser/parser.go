@@ -190,7 +190,10 @@ func (p *Parser) parseFunctionDeclaration() ast.Statement {
 		return nil
 	}
 
-	body := p.parseBlock().(ast.Block)
+	body, ok := p.parseBlock().(ast.Block)
+	if !ok {
+		return nil
+	}
 
 	p.isFunction = false
 	p.endScope()
