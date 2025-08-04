@@ -190,7 +190,10 @@ func (p *Parser) parseFunctionDeclaration() ast.Statement {
 		return nil
 	}
 
-	body := p.parseBlock().(ast.Block)
+	body, ok := p.parseBlock().(ast.Block)
+	if !ok {
+		return nil
+	}
 
 	p.isFunction = false
 	p.endScope()
@@ -479,6 +482,8 @@ func (p *Parser) parseAssign() ast.Expression {
 
 	switch p.peekToken.Type {
 	case token.ASSIGN:
+		targetToken := p.currentToken
+
 		p.nextToken()
 		p.nextToken()
 
@@ -486,11 +491,11 @@ func (p *Parser) parseAssign() ast.Expression {
 		right := p.parseAssign()
 		target, ok := expr.(ast.Assignable)
 		if !ok {
-			p.parseError(p.currentToken, "Invalid assignment target.")
+			p.parseError(targetToken, "Invalid assignment target.")
 			return nil
 		}
 		if !target.CanAssign() {
-			p.parseError(p.currentToken, "Invalid assignment target.")
+			p.parseError(targetToken, "Invalid assignment target.")
 			return nil
 		}
 		p.popStack()
