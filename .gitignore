@@ -23,6 +23,9 @@ go.work
 # Build directory
 releases/
 
+# Test directory
+tests/*.fflt
+
 .envrc
 test.fflt
 test.sflt

@@ -88,5 +88,8 @@ deps:
 test: deps
 	go test -v ./$(TEST_TARGET)
 
+integration_test: deps
+	./tests/run_integration_test.sh
+
 clean:
 	rm -r releases/*
