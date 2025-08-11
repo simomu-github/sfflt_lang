@@ -11,11 +11,12 @@ import (
 const (
 	FUNCTION_LABEL = int64(0b01) << 33
 
-	VM_ADDR         = int64(0b00)
-	VM_ALLOC_REC    = int64(0b01) << 17
-	GLOBAL_VAR_ADDR = int64(0b01) << 33
-	LOCAL_VAR_ADDR  = int64(0b10) << 33
-	HEAP_ADDR       = int64(0b11) << 33
+	VM_ADDR              = int64(0b00)
+	VM_ALLOC_REC         = int64(0b01) << 17
+	VM_LOCAL_SCOPE_DEPTH = int64(0b10) << 17
+	GLOBAL_VAR_ADDR      = int64(0b01) << 33
+	LOCAL_VAR_ADDR       = int64(0b10) << 33
+	HEAP_ADDR            = int64(0b11) << 33
 
 	LOCAL_VAR_SCOPE_SHIFT = 8
 )
@@ -49,6 +50,10 @@ func (c *Compiler) Compile() []string {
 	c.addInstructionWithParam(PUSH, POSI+intToBinary(VM_ALLOC_REC))
 	initHeapAddr := HEAP_ADDR + 0
 	c.addInstructionWithParam(PUSH, POSI+intToBinary(initHeapAddr))
+	c.addInstruction(STORE)
+
+	c.addInstructionWithParam(PUSH, POSI+intToBinary(VM_LOCAL_SCOPE_DEPTH))
+	c.addInstructionWithParam(PUSH, POSI+intToBinary(0))
 	c.addInstruction(STORE)
 
 	for _, e := range c.statements {

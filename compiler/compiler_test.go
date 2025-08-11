@@ -651,6 +651,10 @@ func assertInstructions(actuals []string, expects []string, t *testing.T) {
 		"FFFLFFFFFFFFFFFFFFFFFT",                  // push last heap allocate address
 		"FFFLLFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFT", // push init heap address
 		"LLF", // store
+
+		"FFFLFFFFFFFFFFFFFFFFFFT", // push local scope depth address
+		"FFFFT",                   // push init local scope depth
+		"LLF",                     // store
 	}
 	for i, expect := range initExpects {
 		if actuals[i] != expect {
@@ -659,10 +663,10 @@ func assertInstructions(actuals []string, expects []string, t *testing.T) {
 	}
 
 	for i, expect := range expects {
-		if len(actuals) <= i+3 {
+		if len(actuals) <= i+6 {
 			t.Fatalf("tests[%d] - expected instruction does not exists. expected=%q", i, expect)
 		}
-		if actuals[i+3] != expect {
+		if actuals[i+6] != expect {
 			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, actuals[i+3])
 		}
 	}
