@@ -1,0 +1,6 @@
+include "arrays";
+
+var ary = [12, 11, 13, 5, 6, 7];
+
+stable_sort(ary);
+print_array(ary);
