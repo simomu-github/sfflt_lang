@@ -510,12 +510,13 @@ func (p *Parser) parseAssign() ast.Expression {
 func (p *Parser) parseOr() ast.Expression {
 	expr := p.parseAnd()
 	for p.matchPeekToken(token.OR) {
+		p.popStack() // Logical operations consume the left side first.
+
 		p.nextToken()
 		operator := p.currentToken
 		p.nextToken()
 		right := p.parseAnd()
 		expr = ast.Binary{Left: expr, Operator: operator, Right: right}
-		p.popStack()
 	}
 
 	return expr
@@ -524,12 +525,13 @@ func (p *Parser) parseOr() ast.Expression {
 func (p *Parser) parseAnd() ast.Expression {
 	expr := p.parseEquality()
 	for p.matchPeekToken(token.AND) {
+		p.popStack() // Logical operations consume the left side first.
+
 		p.nextToken()
 		operator := p.currentToken
 		p.nextToken()
 		right := p.parseEquality()
 		expr = ast.Binary{Left: expr, Operator: operator, Right: right}
-		p.popStack()
 	}
 
 	return expr
