@@ -36,14 +36,14 @@ func TestCompileArrayLiteral(t *testing.T) {
 	instructions := compile(input, t)
 	expects := []string{
 		// allocate 6
-		"FFFLFFFFFFFFFFFFFFFFFT", // push last heap allocate address
-		"LLL",                    // retrieve
-		"FTF",                    // dup
-		"FFFLLFT",                // push 6 ( length * 2 + 2 )
-		"LFFF",                   // add
-		"FFFLFFFFFFFFFFFFFFFFFT", // push last heap allocate address
-		"FTL",                    // swap
-		"LLF",                    // store
+		"FFFLFFFFFFFFFFFFFFFFT", // push last heap allocate address
+		"LLL",                   // retrieve
+		"FTF",                   // dup
+		"FFFLLFT",               // push 6 ( length * 2 + 2 )
+		"LFFF",                  // add
+		"FFFLFFFFFFFFFFFFFFFFT", // push last heap allocate address
+		"FTL",                   // swap
+		"LLF",                   // store
 
 		// setup array
 		"FTF",     // dup
@@ -78,14 +78,14 @@ func TestCompileStringLiteral(t *testing.T) {
 	instructions := compile(input, t)
 	expects := []string{
 		// allocate 8
-		"FFFLFFFFFFFFFFFFFFFFFT", // push last heap allocate address
-		"LLL",                    // retrieve
-		"FTF",                    // dup
-		"FFFLFFFT",               // push 8 ( length * 2 + 2 )
-		"LFFF",                   // add
-		"FFFLFFFFFFFFFFFFFFFFFT", // push last heap allocate address
-		"FTL",                    // swap
-		"LLF",                    // store
+		"FFFLFFFFFFFFFFFFFFFFT", // push last heap allocate address
+		"LLL",                   // retrieve
+		"FTF",                   // dup
+		"FFFLFFFT",              // push 8 ( length * 2 + 2 )
+		"LFFF",                  // add
+		"FFFLFFFFFFFFFFFFFFFFT", // push last heap allocate address
+		"FTL",                   // swap
+		"LLF",                   // store
 
 		// setup string
 		"FTF",     // dup
@@ -143,10 +143,30 @@ func TestCompileCall(t *testing.T) {
 	input := "a(1, 2, 3);"
 	instructions := compile(input, t)
 	expects := []string{
-		"FFFLT",                                  // push 1
-		"FFFLFT",                                 // push 2
-		"FFFLLT",                                 // push 3
+		// arguments
+		"FFFLT",  // push 1
+		"FFFLFT", // push 2
+		"FFFLLT", // push 3
+
+		// before call
+		"FFFLFFFFFFFFFFFFFFFFFT", // push call stack address
+		"LLL",                    // retrieve
+		"FFFLT",                  // push 1
+		"LFFF",                   // add
+		"FFFLFFFFFFFFFFFFFFFFFT", // push call stack address
+		"FTL",                    // swap
+		"LLF",                    // store
+
 		"TFLLFLLLFFLFFFFFFLLFFFFLFLFFLFFLFLLFFT", // call sub
+
+		// after call
+		"FFFLFFFFFFFFFFFFFFFFFT", // push call stack address
+		"LLL",                    // retrieve
+		"FFFLT",                  // push 1
+		"LFFL",                   // sub
+		"FFFLFFFFFFFFFFFFFFFFFT", // push call stack address
+		"FTL",                    // swap
+		"LLF",                    // store
 	}
 
 	assertInstructions(instructions, expects, t)
@@ -157,14 +177,14 @@ func TestCompileIndex(t *testing.T) {
 	instructions := compile(input, t)
 	expects := []string{
 		// allocate 4
-		"FFFLFFFFFFFFFFFFFFFFFT", // push last heap allocate address
-		"LLL",                    // retrieve
-		"FTF",                    // dup
-		"FFFLFFT",                // push 4 ( length * 2 + 2 )
-		"LFFF",                   // add
-		"FFFLFFFFFFFFFFFFFFFFFT", // push last heap allocate address
-		"FTL",                    // swap
-		"LLF",                    // store
+		"FFFLFFFFFFFFFFFFFFFFT", // push last heap allocate address
+		"LLL",                   // retrieve
+		"FTF",                   // dup
+		"FFFLFFT",               // push 4 ( length * 2 + 2 )
+		"LFFF",                  // add
+		"FFFLFFFFFFFFFFFFFFFFT", // push last heap allocate address
+		"FTL",                   // swap
+		"LLF",                   // store
 
 		// setup array
 		"FTF",    // dup
@@ -371,12 +391,29 @@ func TestCompileAssignLocalVariable(t *testing.T) {
 	input := "{ var a = 1; a = 2; }"
 	instructions := compile(input, t)
 	expects := []string{
+		// calculate call stack depth
+		"FFFLFFFFFFFFFFFFFFFFFT", // push call stack address
+		"LLL",                    // retrieve
+		"FFFLFFFFFFFFFFFFFFFFT",  // push 1 << 16 (call stack bit map)
+		"LFFT",                   // mul
 
+		// calculate local variable address
 		"FFFLFFFFFFFFFFFFFFFFFFFFFFFFFLFFFFFFFFT", // push local variable addr (scope 1, index 0)
+		"LFFF", // add
+
 		"FFFLT", // push 1
 		"LLF",   // store
 
+		// calculate call stack depth
+		"FFFLFFFFFFFFFFFFFFFFFT", // push call stack address
+		"LLL",                    // retrieve
+		"FFFLFFFFFFFFFFFFFFFFT",  // push 1 << 16 (call stack bit map)
+		"LFFT",                   // mul
+
+		// calculate local variable address
 		"FFFLFFFFFFFFFFFFFFFFFFFFFFFFFLFFFFFFFFT", // push local variable addr (scope 1, index 0)
+		"LFFF", // add
+
 		"FTF",    // dup
 		"FFFLFT", // push 2
 		"LLF",    // store
@@ -394,14 +431,14 @@ func TestCompileAssignIndex(t *testing.T) {
 	expects := []string{
 		// array literal
 		// allocate 4
-		"FFFLFFFFFFFFFFFFFFFFFT", // push last heap allocate address
-		"LLL",                    // retrieve
-		"FTF",                    // dup
-		"FFFLFFT",                // push 4 ( length * 2 + 2 )
-		"LFFF",                   // add
-		"FFFLFFFFFFFFFFFFFFFFFT", // push last heap allocate address
-		"FTL",                    // swap
-		"LLF",                    // store
+		"FFFLFFFFFFFFFFFFFFFFT", // push last heap allocate address
+		"LLL",                   // retrieve
+		"FTF",                   // dup
+		"FFFLFFT",               // push 4 ( length * 2 + 2 )
+		"LFFF",                  // add
+		"FFFLFFFFFFFFFFFFFFFFT", // push last heap allocate address
+		"FTL",                   // swap
+		"LLF",                   // store
 
 		// setup array
 		"FTF",    // dup
@@ -523,19 +560,63 @@ func TestCompileLocalVariable(t *testing.T) {
 	input := "{ var a = 1; { var b = 2; var c = 3;  a; b; }}"
 	instructions := compile(input, t)
 	expects := []string{
+		// calculate call stack depth
+		"FFFLFFFFFFFFFFFFFFFFFT", // push call stack address
+		"LLL",                    // retrieve
+		"FFFLFFFFFFFFFFFFFFFFT",  // push 1 << 16 (call stack bit map)
+		"LFFT",                   // mul
+		// calculate local variable addr
 		"FFFLFFFFFFFFFFFFFFFFFFFFFFFFFLFFFFFFFFT", // push local variable addr (scope 1, index 0)
+		"LFFF", // add
+
 		"FFFLT", // push 1
 		"LLF",   // store
+
+		// calculate call stack depth
+		"FFFLFFFFFFFFFFFFFFFFFT", // push call stack address
+		"LLL",                    // retrieve
+		"FFFLFFFFFFFFFFFFFFFFT",  // push 1 << 16 (call stack bit map)
+		"LFFT",                   // mul
+		// calculate local variable addr
 		"FFFLFFFFFFFFFFFFFFFFFFFFFFFFLFFFFFFFFFT", // push local variable addr (scope 2, index 0)
+		"LFFF", // add
+
 		"FFFLFT", // push 2
 		"LLF",    // store
+
+		// calculate call stack depth
+		"FFFLFFFFFFFFFFFFFFFFFT", // push call stack address
+		"LLL",                    // retrieve
+		"FFFLFFFFFFFFFFFFFFFFT",  // push 1 << 16 (call stack bit map)
+		"LFFT",                   // mul
+		// calculate local variable addr
 		"FFFLFFFFFFFFFFFFFFFFFFFFFFFFLFFFFFFFFLT", // push local variable addr (scope 2, index 1)
+		"LFFF", // add
+
 		"FFFLLT", // push 3
 		"LLF",    // store
+
+		// calculate call stack depth
+		"FFFLFFFFFFFFFFFFFFFFFT", // push call stack address
+		"LLL",                    // retrieve
+		"FFFLFFFFFFFFFFFFFFFFT",  // push 1 << 16 (call stack bit map)
+		"LFFT",                   // mul
+		// calculate local variable addr
 		"FFFLFFFFFFFFFFFFFFFFFFFFFFFFFLFFFFFFFFT", // push local variable addr (scope 1, index 0)
+		"LFFF", // add
+
 		"LLL", // retrieve
 		"FTT", // discard
+
+		// calculate call stack depth
+		"FFFLFFFFFFFFFFFFFFFFFT", // push call stack address
+		"LLL",                    // retrieve
+		"FFFLFFFFFFFFFFFFFFFFT",  // push 1 << 16 (call stack bit map)
+		"LFFT",                   // mul
+		// calculate local variable addr
 		"FFFLFFFFFFFFFFFFFFFFFFFFFFFFLFFFFFFFFFT", // push local variable addr (scope 2, index 0)
+		"LFFF", // add
+
 		"LLL", // retrieve
 		"FTT", // discard
 	}
@@ -547,14 +628,34 @@ func TestCompileFunction(t *testing.T) {
 	input := "func a() { 1;} a();"
 	instructions := compile(input, t)
 	expects := []string{
-		"TFLLFLLLFFLFFFFFFLLFFFFLFLFFLFFLFLLFFT",
-		"FTT",
-		"TTT",
-		"TFFLFLLLFFLFFFFFFLLFFFFLFLFFLFFLFLLFFT",
-		"FFFLT",
-		"FTT",
-		"FFFFT",
-		"TLT",
+		// before call
+		"FFFLFFFFFFFFFFFFFFFFFT", // push call stack address
+		"LLL",                    // retrieve
+		"FFFLT",                  // push 1
+		"LFFF",                   // add
+		"FFFLFFFFFFFFFFFFFFFFFT", // push call stack address
+		"FTL",                    // swap
+		"LLF",                    // store
+
+		"TFLLFLLLFFLFFFFFFLLFFFFLFLFFLFFLFLLFFT", // jump a()
+
+		// after call
+		"FFFLFFFFFFFFFFFFFFFFFT", // push call stack address
+		"LLL",                    // retrieve
+		"FFFLT",                  // push 1
+		"LFFL",                   // sub
+		"FFFLFFFFFFFFFFFFFFFFFT", // push call stack address
+		"FTL",                    // swap
+		"LLF",                    // store
+
+		"FTT", // discard
+		"TTT", // end
+
+		"TFFLFLLLFFLFFFFFFLLFFFFLFLFFLFFLFLLFFT", // mark label
+		"FFFLT",                                  // push 1
+		"FTT",                                    // discard
+		"FFFFT",                                  // push 0
+		"TLT",                                    // end sub
 	}
 
 	assertInstructions(instructions, expects, t)
@@ -569,14 +670,33 @@ func TestCompileReturn(t *testing.T) {
 
 	instructions := compiler.Compile()
 	expects := []string{
-		"TFLLFLLLFFLFFFFFFLLFFFFLFLFFLFFLFLLFFT",
-		"FTT",
-		"TTT",
-		"TFFLFLLLFFLFFFFFFLLFFFFLFLFFLFFLFLLFFT",
-		"FFFLT",
-		"TLT",
-		"FFFFT",
-		"TLT",
+		// before call
+		"FFFLFFFFFFFFFFFFFFFFFT", // push call stack address
+		"LLL",                    // retrieve
+		"FFFLT",                  // push 1
+		"LFFF",                   // add
+		"FFFLFFFFFFFFFFFFFFFFFT", // push call stack address
+		"FTL",                    // swap
+		"LLF",                    // store
+
+		"TFLLFLLLFFLFFFFFFLLFFFFLFLFFLFFLFLLFFT", // call 1()
+
+		// after call
+		"FFFLFFFFFFFFFFFFFFFFFT", // push call stack address
+		"LLL",                    // retrieve
+		"FFFLT",                  // push 1
+		"LFFL",                   // sub
+		"FFFLFFFFFFFFFFFFFFFFFT", // push call stack address
+		"FTL",                    // swap
+		"LLF",                    // store
+
+		"FTT",                                    // discard
+		"TTT",                                    // end
+		"TFFLFLLLFFLFFFFFFLLFFFFLFLFFLFFLFLLFFT", // mark label
+		"FFFLT",                                  // push 1
+		"TLT",                                    // end sub
+		"FFFFT",                                  // push 0
+		"TLT",                                    // end sub
 	}
 
 	assertInstructions(instructions, expects, t)
@@ -591,14 +711,32 @@ func TestCompileEmptyReturn(t *testing.T) {
 
 	instructions := compiler.Compile()
 	expects := []string{
-		"TFLLFLLLFFLFFFFFFLLFFFFLFLFFLFFLFLLFFT",
-		"FTT",
-		"TTT",
-		"TFFLFLLLFFLFFFFFFLLFFFFLFLFFLFFLFLLFFT",
-		"FFFFT",
-		"TLT",
-		"FFFFT",
-		"TLT",
+		// before call
+		"FFFLFFFFFFFFFFFFFFFFFT",                 // push call stack address
+		"LLL",                                    // retrieve
+		"FFFLT",                                  // push 1
+		"LFFF",                                   // add
+		"FFFLFFFFFFFFFFFFFFFFFT",                 // push call stack address
+		"FTL",                                    // swap
+		"LLF",                                    // store
+		"TFLLFLLLFFLFFFFFFLLFFFFLFLFFLFFLFLLFFT", // call a()
+
+		// after call
+		"FFFLFFFFFFFFFFFFFFFFFT", // push call stack address
+		"LLL",                    // retrieve
+		"FFFLT",                  // push 1
+		"LFFL",                   // sub
+		"FFFLFFFFFFFFFFFFFFFFFT", // push call stack address
+		"FTL",                    // swap
+		"LLF",                    // store
+
+		"FTT",                                    // discard
+		"TTT",                                    // end
+		"TFFLFLLLFFLFFFFFFLLFFFFLFLFFLFFLFLLFFT", // mark label
+		"FFFFT",                                  //push 0
+		"TLT",                                    // end sub
+		"FFFFT",                                  // push 0
+		"TLT",                                    // end sub
 	}
 
 	assertInstructions(instructions, expects, t)
@@ -648,13 +786,13 @@ func assertInstructions(actuals []string, expects []string, t *testing.T) {
 		t.Fatal("Initialize vm heap instructions do not exists")
 	}
 	initExpects := []string{
-		"FFFLFFFFFFFFFFFFFFFFFT",                  // push last heap allocate address
+		"FFFLFFFFFFFFFFFFFFFFT",                   // push last heap allocate address
 		"FFFLLFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFT", // push init heap address
 		"LLF", // store
 
-		"FFFLFFFFFFFFFFFFFFFFFFT", // push local scope depth address
-		"FFFFT",                   // push init local scope depth
-		"LLF",                     // store
+		"FFFLFFFFFFFFFFFFFFFFFT", // push call stack address
+		"FFFFT",                  // push init call stack
+		"LLF",                    // store
 	}
 	for i, expect := range initExpects {
 		if actuals[i] != expect {
@@ -667,7 +805,7 @@ func assertInstructions(actuals []string, expects []string, t *testing.T) {
 			t.Fatalf("tests[%d] - expected instruction does not exists. expected=%q", i, expect)
 		}
 		if actuals[i+6] != expect {
-			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, actuals[i+3])
+			t.Fatalf("tests[%d] - instruction wrong. expected=%q, got=%q", i, expect, actuals[i+6])
 		}
 	}
 }
