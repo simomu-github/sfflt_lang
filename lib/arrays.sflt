@@ -1,0 +1,13 @@
+func print_array(ary) {
+    putc '[';
+    for (var i = 0; i < len(ary); i = i + 1) {
+        putn ary[i];
+        if (i != len(ary) - 1) {
+            putc ',';
+            putc ' ';
+        }
+    }
+    putc ']';
+    putc '\n';
+}
+
