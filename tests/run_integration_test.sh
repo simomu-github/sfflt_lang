@@ -8,6 +8,7 @@ EXAMPLES=(
 	"hello_world,Hello World!"
 	"fib,55"
 	"local_var_and_logiral_operation,11"
+	"recursion_local_variable,321"
 )
 
 for example in "${EXAMPLES[@]}"; do
