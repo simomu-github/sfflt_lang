@@ -1,0 +1,11 @@
+func test(a) {
+    if (a == 3) {
+        return;
+    }
+
+    var local = a + 1;
+    test(a + 1);
+    putn local;
+}
+
+test(0);

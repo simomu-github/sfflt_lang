@@ -12,12 +12,14 @@ const (
 	FUNCTION_LABEL = int64(0b01) << 33
 
 	VM_ADDR         = int64(0b00)
-	VM_ALLOC_REC    = int64(0b01) << 17
+	VM_ALLOC_REC    = int64(0b01) << 16
+	VM_CALL_STACK   = int64(0b10) << 16
 	GLOBAL_VAR_ADDR = int64(0b01) << 33
 	LOCAL_VAR_ADDR  = int64(0b10) << 33
 	HEAP_ADDR       = int64(0b11) << 33
 
 	LOCAL_VAR_SCOPE_SHIFT = 8
+	CALL_STACK_SHIFT      = 16
 )
 
 type Compiler struct {
@@ -51,6 +53,10 @@ func (c *Compiler) Compile() []string {
 	c.addInstructionWithParam(PUSH, POSI+intToBinary(initHeapAddr))
 	c.addInstruction(STORE)
 
+	c.addInstructionWithParam(PUSH, POSI+intToBinary(VM_CALL_STACK))
+	c.addInstructionWithParam(PUSH, POSI+intToBinary(0))
+	c.addInstruction(STORE)
+
 	for _, e := range c.statements {
 		e.Visit(c)
 	}
@@ -68,8 +74,8 @@ func (c *Compiler) Compile() []string {
 
 func (c *Compiler) VisitVar(s ast.Var) {
 	if s.IsLocal {
-		addr := intToBinary(LOCAL_VAR_ADDR + int64(s.ScopeDepth<<LOCAL_VAR_SCOPE_SHIFT) + int64(s.LocalIndex))
-		c.addInstructionWithParam(PUSH, POSI+addr)
+		c.pushLocalVariableAddress(s.ScopeDepth, s.LocalIndex)
+
 		s.Expression.Visit(c)
 		c.addInstruction(STORE)
 	} else {
@@ -192,14 +198,13 @@ func (c *Compiler) VisitAssign(s ast.Assign) {
 }
 
 func (c *Compiler) VisitAssignToVariable(v ast.Variable) {
-	addr := ""
 	if v.Type == ast.LOCAL {
-		addr = intToBinary(LOCAL_VAR_ADDR + int64(v.ScopeDepth<<LOCAL_VAR_SCOPE_SHIFT) + int64(v.LocalIndex))
+		c.pushLocalVariableAddress(v.ScopeDepth, v.LocalIndex)
 	} else {
 		hash := hashString(v.Identifier.Literal)
-		addr = intToBinary(GLOBAL_VAR_ADDR + hash)
+		addr := intToBinary(GLOBAL_VAR_ADDR + hash)
+		c.addInstructionWithParam(PUSH, POSI+addr)
 	}
-	c.addInstructionWithParam(PUSH, POSI+addr)
 }
 
 func (c *Compiler) VisitAssignToIndex(i ast.Index) {
@@ -383,7 +388,9 @@ func (c *Compiler) VisitCall(e ast.Call) {
 		hash := hashString(e.Callee.Literal)
 		label := intToBinary(FUNCTION_LABEL + hash)
 
+		c.beforeCall()
 		c.addInstructionWithParam(CALLSUB, label)
+		c.afterCall()
 	}
 }
 
@@ -460,8 +467,7 @@ func (c *Compiler) globalVariable(e ast.Variable) {
 }
 
 func (c *Compiler) localVariable(e ast.Variable) {
-	addr := intToBinary(LOCAL_VAR_ADDR + int64(e.ScopeDepth<<LOCAL_VAR_SCOPE_SHIFT) + int64(e.LocalIndex))
-	c.addInstructionWithParam(PUSH, POSI+addr)
+	c.pushLocalVariableAddress(e.ScopeDepth, e.LocalIndex)
 	c.addInstruction(RETRIEVE)
 }
 
@@ -580,6 +586,38 @@ func (c *Compiler) allocate(size int64) {
 	c.addInstructionWithParam(PUSH, POSI+intToBinary(size))
 	c.addInstruction(ADD)
 	c.addInstructionWithParam(PUSH, POSI+intToBinary(VM_ALLOC_REC))
+	c.addInstruction(SWAP)
+	c.addInstruction(STORE)
+}
+
+func (c *Compiler) pushLocalVariableAddress(scopeDepth, localIndex int) {
+	c.addInstructionWithParam(PUSH, POSI+intToBinary(VM_CALL_STACK))
+	c.addInstruction(RETRIEVE)
+	callStackAddr := intToBinary(1 << CALL_STACK_SHIFT)
+	c.addInstructionWithParam(PUSH, POSI+callStackAddr)
+	c.addInstruction(MUL)
+
+	addr := intToBinary(LOCAL_VAR_ADDR + int64(scopeDepth<<LOCAL_VAR_SCOPE_SHIFT) + int64(localIndex))
+	c.addInstructionWithParam(PUSH, POSI+addr)
+	c.addInstruction(ADD)
+}
+
+func (c *Compiler) beforeCall() {
+	c.addInstructionWithParam(PUSH, POSI+intToBinary(VM_CALL_STACK))
+	c.addInstruction(RETRIEVE)
+	c.addInstructionWithParam(PUSH, POSI+intToBinary(1))
+	c.addInstruction(ADD)
+	c.addInstructionWithParam(PUSH, POSI+intToBinary(VM_CALL_STACK))
+	c.addInstruction(SWAP)
+	c.addInstruction(STORE)
+}
+
+func (c *Compiler) afterCall() {
+	c.addInstructionWithParam(PUSH, POSI+intToBinary(VM_CALL_STACK))
+	c.addInstruction(RETRIEVE)
+	c.addInstructionWithParam(PUSH, POSI+intToBinary(1))
+	c.addInstruction(SUB)
+	c.addInstructionWithParam(PUSH, POSI+intToBinary(VM_CALL_STACK))
 	c.addInstruction(SWAP)
 	c.addInstruction(STORE)
 }
