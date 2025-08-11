@@ -18,6 +18,7 @@ import (
 var (
 	versionOpt = flag.Bool("v", false, "display version information")
 	formatOpt  = flag.String("format", "64", "output code format. [oneline, pretty, (number of column)]")
+	outputOpt  = flag.String("output", "", "output script name.")
 )
 
 const version = "v0.0.2"
@@ -83,7 +84,12 @@ func Compile(path string, statements []ast.Statement) int {
 	if err != nil {
 		return 1
 	}
-	outputFilename := getFilenameWithoutExt(path) + ".fflt"
+	var outputFilename string
+	if *outputOpt == "" {
+		outputFilename = getFilenameWithoutExt(path) + ".fflt"
+	} else {
+		outputFilename = *outputOpt
+	}
 	os.WriteFile(outputFilename, []byte(output), 0644)
 
 	return 0
