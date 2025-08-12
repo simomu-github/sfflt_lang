@@ -267,6 +267,29 @@ include "strings";
 println("Hello World!");
 ```
 
+#### `arrays`
+
+- `print_array`
+
+Write array with new line.
+
+```
+include "arrays";
+
+print_array([1, 2, 3]);
+```
+
+- `stable_sort`
+
+Sort array as stable.
+
+```
+include "arrays";
+
+var ary = [3, 5, 1, 2, 8];
+
+stable_sort(ary);
+```
 
 ### Comment
 
