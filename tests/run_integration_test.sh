@@ -3,17 +3,19 @@
 set -eu
 
 SCRIPT_DIR=$(cd $(dirname $0) && pwd)
-EXAMPLES=(
+
+declare -A EXAMPLES=(
 	# test_file_name expect_output
-	"hello_world,Hello World!"
-	"fib,55"
-	"local_var_and_logiral_operation,11"
-	"recursion_local_variable,321"
+	['hello_world']='Hello World!'
+	['fib']='55'
+	['local_var_and_logiral_operation']='11'
+	['recursion_local_variable']='321'
+	['stable_sort']='[5, 6, 7, 11, 12, 13]'
 )
 
-for example in "${EXAMPLES[@]}"; do
-	file=$(echo "$example" | cut -d',' -f1)
-	expect=$(echo "$example" | cut -d',' -f2)
+for example in "${!EXAMPLES[@]}"; do
+	file=$example
+	expect=${EXAMPLES[$example]}
 
 	echo "Run ${file}"
 	go run $SCRIPT_DIR/../cmd/sfflt_lang.go -format pretty -output $SCRIPT_DIR/test.fflt $SCRIPT_DIR/$file.sflt

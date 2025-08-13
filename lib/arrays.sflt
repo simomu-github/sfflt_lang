@@ -1,0 +1,57 @@
+func print_array(ary) {
+    putc '[';
+    for (var i = 0; i < len(ary); i = i + 1) {
+        putn ary[i];
+        if (i != len(ary) - 1) {
+            putc ',';
+            putc ' ';
+        }
+    }
+    putc ']';
+    putc '\n';
+}
+
+func stable_sort(ary) {
+    _merge_sort(ary, 0, len(ary) - 1);
+    return ary;
+}
+
+func _merge_sort(ary, left, right) {
+    if (left < right) {
+        var mid = left + (right - left) / 2;
+
+        _merge_sort(ary, left, mid);
+        _merge_sort(ary, mid + 1, right);
+
+        _merge_in_place(ary, left, mid, right);
+    }
+}
+
+func _merge_in_place(ary, left, mid, right) {
+    var left2 = mid + 1;
+
+    if (ary[mid] <= ary[left2]) {
+        return;
+    }
+
+    var _left = left;
+    var _mid = mid;
+    while(_left <= mid && left2 <= right) {
+        if (ary[_left] <= ary[left2]) {
+            _left = _left + 1;
+        } else {
+            var value = ary[left2];
+            var index = left2;
+
+            while (index != _left) {
+                ary[index] = ary[index - 1];
+                index = index - 1;
+            }
+            ary[_left] = value;
+
+            _left = _left + 1;
+            _mid = _mid + 1;
+            left2 = left2 + 1;
+        }
+    }
+}
