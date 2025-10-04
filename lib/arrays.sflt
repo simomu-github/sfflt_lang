@@ -36,7 +36,7 @@ func _merge_in_place(ary, left, mid, right) {
 
     var _left = left;
     var _mid = mid;
-    while(_left <= mid && left2 <= right) {
+    while(_left <= _mid && left2 <= right) {
         if (ary[_left] <= ary[left2]) {
             _left = _left + 1;
         } else {
