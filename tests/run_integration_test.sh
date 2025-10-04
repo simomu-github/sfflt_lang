@@ -10,7 +10,7 @@ declare -A EXAMPLES=(
 	['fib']='55'
 	['local_var_and_logiral_operation']='11'
 	['recursion_local_variable']='321'
-	['stable_sort']='[5, 6, 7, 11, 12, 13]'
+	['stable_sort']='[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]'
 )
 
 for example in "${!EXAMPLES[@]}"; do
