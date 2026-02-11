@@ -1,14 +1,14 @@
 func print_array(ary) {
-    putc '[';
+    putc('[');
     for (var i = 0; i < len(ary); i = i + 1) {
-        putn ary[i];
+        putn(ary[i]);
         if (i != len(ary) - 1) {
-            putc ',';
-            putc ' ';
+            putc(',');
+            putc(' ');
         }
     }
-    putc ']';
-    putc '\n';
+    putc(']');
+    putc('\n');
 }
 
 func stable_sort(ary) {
