@@ -235,11 +235,6 @@ func (p *Parser) parseInclude() []ast.Statement {
 }
 
 func (p *Parser) parseStatement() ast.Statement {
-	if p.currentToken.Type == token.PUTN ||
-		p.currentToken.Type == token.PUTC {
-		return p.parsePutStatement()
-	}
-
 	if p.matchToken(token.IF) {
 		return p.parseIf()
 	}
@@ -275,18 +270,6 @@ func (p *Parser) parseStatement() ast.Statement {
 	}
 
 	return ast.ExpressionStatement{Expression: expr}
-}
-
-func (p *Parser) parsePutStatement() ast.Statement {
-	tok := p.currentToken
-	p.nextToken()
-	expr := p.parseExpression()
-	if p.currentToken.Type != token.SEMICOLON {
-		p.parseError(p.currentToken, "Expect ';' after statement.")
-		return nil
-	}
-
-	return ast.PutStatement{Token: tok, Expression: expr}
 }
 
 func (p *Parser) parseReturn() ast.Statement {
@@ -670,9 +653,6 @@ func (p *Parser) parsePrimary() ast.Expression {
 		return ast.StringLiteral{Token: p.currentToken, Value: p.currentToken.Literal}
 	case token.IDENT:
 		return p.parseVariable()
-	case token.GETC, token.GETN:
-		p.pushStack()
-		return ast.Get{Token: p.currentToken}
 	case token.TRUE, token.FALSE:
 		p.pushStack()
 		return ast.BooleanLiteral{Token: p.currentToken, Value: p.currentToken.Type == token.TRUE}

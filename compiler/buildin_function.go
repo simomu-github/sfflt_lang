@@ -1,6 +1,10 @@
 package compiler
 
 var buildinFunctions = map[string]*BuildInFunction{
+	"putn":   {f: putn, arity: 1},
+	"putc":   {f: putc, arity: 1},
+	"getn":   {f: getn, arity: 0},
+	"getc":   {f: getc, arity: 0},
 	"len":    {f: arrayLen, arity: 1},
 	"copy":   {f: arrayCopy, arity: 2},
 	"append": {f: arrayAppend, arity: 2},
@@ -13,6 +17,34 @@ var buildinFunctions = map[string]*BuildInFunction{
 type BuildInFunction struct {
 	arity int
 	f     func(c *Compiler)
+}
+
+func putn(c *Compiler) {
+	c.addInstruction(PUTN)
+	// return empty
+	c.addInstructionWithParam(PUSH, POSI+"F")
+}
+
+func putc(c *Compiler) {
+	c.addInstruction(PUTC)
+	// return empty
+	c.addInstructionWithParam(PUSH, POSI+"F")
+}
+
+func getn(c *Compiler) {
+	addr := intToBinary(VM_ADDR)
+	c.addInstructionWithParam(PUSH, POSI+addr)
+	c.addInstruction(GETN)
+	c.addInstructionWithParam(PUSH, POSI+addr)
+	c.addInstruction(RETRIEVE)
+}
+
+func getc(c *Compiler) {
+	addr := intToBinary(VM_ADDR)
+	c.addInstructionWithParam(PUSH, POSI+addr)
+	c.addInstruction(GETC)
+	c.addInstructionWithParam(PUSH, POSI+addr)
+	c.addInstruction(RETRIEVE)
 }
 
 func arrayLen(c *Compiler) {
