@@ -49,12 +49,6 @@ const (
 	RETURN = "RETURN"
 	BREAK  = "BREAK"
 
-	PUTN = "PUTN"
-	PUTC = "PUTC"
-
-	GETN = "GETN"
-	GETC = "GETC"
-
 	INCLUDE = "INCLUDE"
 )
 

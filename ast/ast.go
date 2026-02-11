@@ -39,11 +39,6 @@ func (f Function) Visit(visitor StatementVisitor) {
 	visitor.VisitFunction(f)
 }
 
-type PutStatement struct {
-	Token      token.Token
-	Expression Expression
-}
-
 type Return struct {
 	Value Expression
 }
@@ -243,8 +238,4 @@ func (i Index) CanAssign() bool { return true }
 
 func (i Index) VisitAssign(visitor AssignableVisitor) {
 	visitor.VisitAssignToIndex(i)
-}
-
-type Get struct {
-	Token token.Token
 }

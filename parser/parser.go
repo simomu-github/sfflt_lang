@@ -860,8 +860,7 @@ func (p *Parser) skipStatement() {
 		}
 
 		switch p.peekToken.Type {
-		case token.VAR, token.FUNC, token.RETURN, token.BREAK, token.IF,
-			token.WHILE, token.PUTN, token.PUTC, token.GETN, token.GETC:
+		case token.VAR, token.FUNC, token.RETURN, token.BREAK, token.IF, token.WHILE:
 			return
 		}
 		p.nextToken()

@@ -109,16 +109,6 @@ func (c *Compiler) VisitFunction(s ast.Function) {
 	c.compilingFunction = nil
 }
 
-func (c *Compiler) VisitPut(s ast.PutStatement) {
-	s.Expression.Visit(c)
-
-	if s.Token.Type == token.PUTN {
-		c.addInstruction(PUTN)
-	} else {
-		c.addInstruction(PUTC)
-	}
-}
-
 func (c *Compiler) VisitReturn(s ast.Return) {
 	if s.Value == nil {
 		c.addInstructionWithParam(PUSH, ZERO)
@@ -468,19 +458,6 @@ func (c *Compiler) globalVariable(e ast.Variable) {
 
 func (c *Compiler) localVariable(e ast.Variable) {
 	c.pushLocalVariableAddress(e.ScopeDepth, e.LocalIndex)
-	c.addInstruction(RETRIEVE)
-}
-
-func (c *Compiler) VisitGet(s ast.Get) {
-	addr := intToBinary(VM_ADDR)
-	c.addInstructionWithParam(PUSH, POSI+addr)
-	if s.Token.Type == token.GETN {
-		c.addInstruction(GETN)
-	} else {
-		c.addInstruction(GETC)
-	}
-
-	c.addInstructionWithParam(PUSH, POSI+addr)
 	c.addInstruction(RETRIEVE)
 }
 
