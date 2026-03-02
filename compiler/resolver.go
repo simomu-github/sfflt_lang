@@ -84,7 +84,6 @@ func (r *Resolver) VisitFunction(s ast.Function) {
 		stmt.Visit(r)
 	}
 }
-func (r *Resolver) VisitPut(s ast.PutStatement) { s.Expression.Visit(r) }
 func (r *Resolver) VisitReturn(s ast.Return) {
 	if s.Value != nil {
 		s.Value.Visit(r)
@@ -127,7 +126,6 @@ func (r *Resolver) VisitCharLiteral(e ast.CharLiteral)       {}
 func (r *Resolver) VisitStringLiteral(e ast.StringLiteral)   {}
 func (r *Resolver) VisitBooleanLiteral(e ast.BooleanLiteral) {}
 func (r *Resolver) VisitVariable(e ast.Variable)             {}
-func (r *Resolver) VisitGet(e ast.Get)                       {}
 
 func (r *Resolver) VisitArrayLiteral(e ast.ArrayLiteral) {
 	for _, element := range e.Elements {

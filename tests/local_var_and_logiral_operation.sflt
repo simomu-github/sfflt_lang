@@ -1,12 +1,12 @@
 func test0(a) {
     if (true && a == 1) {
-        putn 1;
+        putn(1);
     }
 }
 
 func test1(a) {
     if (true && true) {
-        putn a;
+        putn(a);
     }
 }
 

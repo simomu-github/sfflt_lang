@@ -5,7 +5,7 @@ func test(a) {
 
     var local = a + 1;
     test(a + 1);
-    putn local;
+    putn(local);
 }
 
 test(0);

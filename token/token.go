@@ -49,12 +49,6 @@ const (
 	RETURN = "RETURN"
 	BREAK  = "BREAK"
 
-	PUTN = "PUTN"
-	PUTC = "PUTC"
-
-	GETN = "GETN"
-	GETC = "GETC"
-
 	INCLUDE = "INCLUDE"
 )
 
@@ -79,10 +73,6 @@ var keywords = map[string]TokenType{
 	"return": RETURN,
 	"break":  BREAK,
 
-	"putn":    PUTN,
-	"putc":    PUTC,
-	"getn":    GETN,
-	"getc":    GETC,
 	"include": INCLUDE,
 }
 

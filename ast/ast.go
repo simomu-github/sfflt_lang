@@ -9,7 +9,6 @@ type Statement interface {
 type StatementVisitor interface {
 	VisitVar(s Var)
 	VisitFunction(f Function)
-	VisitPut(s PutStatement)
 	VisitReturn(s Return)
 	VisitBreak(s Break)
 	VisitIf(s If)
@@ -38,15 +37,6 @@ type Function struct {
 
 func (f Function) Visit(visitor StatementVisitor) {
 	visitor.VisitFunction(f)
-}
-
-type PutStatement struct {
-	Token      token.Token
-	Expression Expression
-}
-
-func (pn PutStatement) Visit(visitor StatementVisitor) {
-	visitor.VisitPut(pn)
 }
 
 type Return struct {
@@ -116,7 +106,6 @@ type ExpressionVisitor interface {
 	VisitArrayLiteral(e ArrayLiteral)
 	VisitStringLiteral(e StringLiteral)
 	VisitIndex(i Index)
-	VisitGet(e Get)
 }
 
 type Assignable interface {
@@ -249,12 +238,4 @@ func (i Index) CanAssign() bool { return true }
 
 func (i Index) VisitAssign(visitor AssignableVisitor) {
 	visitor.VisitAssignToIndex(i)
-}
-
-type Get struct {
-	Token token.Token
-}
-
-func (g Get) Visit(visitor ExpressionVisitor) {
-	visitor.VisitGet(g)
 }

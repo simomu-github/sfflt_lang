@@ -8,7 +8,7 @@ import (
 )
 
 func TestCompilePrimary(t *testing.T) {
-	input := "0; 10; 'a'; true; false; getn;"
+	input := "0; 10; 'a'; true; false;"
 	instructions := compile(input, t)
 	expects := []string{
 		"FFFFT",
@@ -18,13 +18,6 @@ func TestCompilePrimary(t *testing.T) {
 		"FFFLLFFFFLT",
 		"FTT",
 		"FFFLT",
-		"FTT",
-		"FFFFT",
-		"FTT",
-		"FFFFT",
-		"LTLL",
-		"FFFFT",
-		"LLL",
 		"FTT",
 	}
 
@@ -469,21 +462,6 @@ func TestCompileAssignIndex(t *testing.T) {
 		"LLL", // retrieve
 		"FTT", // discard
 
-	}
-
-	assertInstructions(instructions, expects, t)
-}
-
-func TestCompilePut(t *testing.T) {
-	input := "putn -1; putc 'a';"
-	instructions := compile(input, t)
-	expects := []string{
-		"FFLLT",
-		"FFFLT",
-		"LFFT",
-		"LTFL",
-		"FFFLLFFFFLT",
-		"LTFF",
 	}
 
 	assertInstructions(instructions, expects, t)

@@ -9,7 +9,7 @@ import (
 )
 
 func TestParsePrimary(t *testing.T) {
-	input := "123; 'a'; true; false; a; getc;"
+	input := "123; 'a'; true; false; a;"
 	lexer := lexer.New("script", input)
 	parser := New(lexer)
 	stmts := parser.ParseProgram()
@@ -83,17 +83,6 @@ func TestParsePrimary(t *testing.T) {
 
 	if variable.Identifier.Literal != "a" {
 		t.Fatalf("variable literal is not match")
-	}
-
-	stmt = stmts[5].(ast.ExpressionStatement)
-	get, ok := stmt.Expression.(ast.Get)
-
-	if !ok {
-		t.Fatalf("Not get")
-	}
-
-	if get.Token.Type != token.GETC {
-		t.Fatalf("token type is not match")
 	}
 
 	if parser.stackTop != 0 {
@@ -712,32 +701,6 @@ func TestParseAndOr(t *testing.T) {
 	}
 }
 
-func TestParsePut(t *testing.T) {
-	input := "putn 1;"
-	lexer := lexer.New("script", input)
-	parser := New(lexer)
-	stmt := parser.ParseProgram()
-
-	put, ok := stmt[0].(ast.PutStatement)
-	if !ok {
-		t.Fatalf("Statement is not put")
-	}
-
-	if put.Token.Type != token.PUTN {
-		t.Fatalf("Token is not PUTN")
-	}
-
-	intLiteral, ok := put.Expression.(ast.IntegerLiteral)
-
-	if !ok {
-		t.Fatalf("Expression is not IntegerLiteral")
-	}
-
-	if intLiteral.Value != 1 {
-		t.Fatalf("IntegerLiteral value is not match")
-	}
-}
-
 func TestParseReturn(t *testing.T) {
 	input := "func test() { return 1; }"
 	lexer := lexer.New("script", input)
@@ -926,7 +889,7 @@ func TestParseVar(t *testing.T) {
 }
 
 func TestParseFunction(t *testing.T) {
-	input := "func test(a, b) { putc 'a'; }"
+	input := "func test(a, b) { a + b; }"
 	lexer := lexer.New("script", input)
 	parser := New(lexer)
 	stmt := parser.ParseProgram()
@@ -952,10 +915,10 @@ func TestParseFunction(t *testing.T) {
 		t.Fatalf("Second params literal is not match")
 	}
 
-	_, ok = funcStmt.Body[0].(ast.PutStatement)
+	_, ok = funcStmt.Body[0].(ast.ExpressionStatement)
 
 	if !ok {
-		t.Fatalf("Body is not PutStatement")
+		t.Fatalf("Body is not ExpressionStatement")
 	}
 }
 
