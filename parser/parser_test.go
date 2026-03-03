@@ -138,7 +138,7 @@ func TestParseString(t *testing.T) {
 }
 
 func TestParseArgumentVariable(t *testing.T) {
-	input := "var a = 0; a = 0; f(a, 1, 2); func f(a, b, c) { 1 + b; }"
+	input := "var a = 0; a = 0; f(a, 1, 2); func f(a: int, b: int, c: int) { 1 + b; }"
 	lexer := lexer.New("script", input)
 	parser := New(lexer)
 	stmt := parser.ParseProgram()
@@ -889,7 +889,7 @@ func TestParseVar(t *testing.T) {
 }
 
 func TestParseFunction(t *testing.T) {
-	input := "func test(a, b) { a + b; }"
+	input := "func test(a: int, b: char) int { return a + b; }"
 	lexer := lexer.New("script", input)
 	parser := New(lexer)
 	stmt := parser.ParseProgram()
@@ -903,32 +903,48 @@ func TestParseFunction(t *testing.T) {
 		t.Fatalf("Function name is not match")
 	}
 
+	if funcStmt.ReturnType.Name.Literal != "int" {
+		t.Fatalf("Function type is not match")
+	}
+
 	if len(funcStmt.Params) != 2 {
 		t.Fatalf("Params count is not match")
 	}
 
-	if funcStmt.Params[0].Literal != "a" {
+	if funcStmt.Params[0].Name.Literal != "a" {
 		t.Fatalf("First params literal is not match")
 	}
 
-	if funcStmt.Params[1].Literal != "b" {
+	if funcStmt.Params[0].Type.Name.Literal != "int" {
+		t.Fatalf("First params type is not match")
+	}
+
+	if funcStmt.Params[1].Name.Literal != "b" {
 		t.Fatalf("Second params literal is not match")
 	}
 
-	_, ok = funcStmt.Body[0].(ast.ExpressionStatement)
+	if funcStmt.Params[1].Type.Name.Literal != "char" {
+		t.Fatalf("Second params type is not match")
+	}
+
+	_, ok = funcStmt.Body[0].(ast.Return)
 
 	if !ok {
-		t.Fatalf("Body is not ExpressionStatement")
+		t.Fatalf("Body is not Return statement")
 	}
 }
 
 func TestParseFunctionWithCall(t *testing.T) {
-	input := "func test1(a, b) { test2(a, b); }"
+	input := "func test1(a: int, b: int) { test2(a, b); }"
 	lexer := lexer.New("script", input)
 	parser := New(lexer)
 	stmt := parser.ParseProgram()
 
 	funcStmt, ok := stmt[0].(ast.Function)
+	if funcStmt.ReturnType != nil {
+		t.Fatalf("Function type is not match")
+	}
+
 	expStmt, ok := funcStmt.Body[0].(ast.ExpressionStatement)
 
 	if !ok {

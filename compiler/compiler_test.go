@@ -517,7 +517,7 @@ func TestCompileGlobalVariable(t *testing.T) {
 }
 
 func TestCompileArgumentVariable(t *testing.T) {
-	input := "func f(a, b, c) { a + c; }"
+	input := "func f(a: int, b: int, c: int) { a + c; }"
 	instructions := compile(input, t)
 	expects := []string{
 		"TTT",

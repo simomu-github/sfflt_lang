@@ -162,7 +162,7 @@ func (p *Parser) parseFunctionDeclaration() ast.Statement {
 		return nil
 	}
 
-	params := []token.Token{}
+	params := []ast.FunctionParam{}
 	if p.currentToken.Type != token.RPAREN {
 		for {
 			if p.currentToken.Type != token.IDENT {
@@ -170,8 +170,19 @@ func (p *Parser) parseFunctionDeclaration() ast.Statement {
 				return nil
 			}
 
-			params = append(params, p.currentToken)
-			p.declareArgumentVariable(p.currentToken, len(params))
+			paramName := p.currentToken
+			p.nextToken()
+			if !p.matchToken(token.COLON) {
+				p.parseError(p.currentToken, "Expect ':' before param type.")
+				return nil
+			}
+			paramType := p.parseType()
+			if paramType == nil {
+				return nil
+			}
+			params = append(params, ast.FunctionParam{Name: paramName, Type: *paramType})
+
+			p.declareArgumentVariable(paramName, len(params))
 
 			p.nextToken()
 			if !p.matchToken(token.COMMA) {
@@ -183,6 +194,12 @@ func (p *Parser) parseFunctionDeclaration() ast.Statement {
 	if !p.matchToken(token.RPAREN) {
 		p.parseError(p.currentToken, "Expect ')' after parameters.")
 		return nil
+	}
+
+	var returnType *ast.Type
+	if p.currentToken.Type == token.IDENT {
+		returnType = p.parseType()
+		p.nextToken()
 	}
 
 	if !p.matchToken(token.LBRACE) {
@@ -198,7 +215,7 @@ func (p *Parser) parseFunctionDeclaration() ast.Statement {
 	p.isFunction = false
 	p.endScope()
 
-	return ast.Function{Name: name, Params: params, Body: body.Statements}
+	return ast.Function{Name: name, Params: params, Body: body.Statements, ReturnType: returnType}
 }
 
 func (p *Parser) parseInclude() []ast.Statement {
@@ -725,6 +742,23 @@ func (p *Parser) parseArrayLiteral() ast.Expression {
 
 	p.pushStack()
 	return ast.ArrayLiteral{Elements: elements}
+}
+
+func (p *Parser) parseType() *ast.Type {
+	if p.currentToken.Type != token.IDENT {
+		p.parseError(p.currentToken, "Expect param type.")
+	}
+	typeName := p.currentToken
+
+	var genericType *ast.Type
+	if p.matchToken(token.LT) {
+		genericType = p.parseType()
+		if p.matchToken(token.GT) {
+			p.parseError(p.currentToken, "Expect '>' after generic type.")
+		}
+	}
+
+	return &ast.Type{Name: typeName, GenericType: genericType}
 }
 
 func (p *Parser) nextToken() {
