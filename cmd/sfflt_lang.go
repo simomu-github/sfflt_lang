@@ -13,6 +13,7 @@ import (
 	"github.com/simomu-github/sfflt_lang/formatter"
 	"github.com/simomu-github/sfflt_lang/lexer"
 	"github.com/simomu-github/sfflt_lang/parser"
+	"github.com/simomu-github/sfflt_lang/type_checker"
 )
 
 var (
@@ -39,6 +40,9 @@ func main() {
 		filepath := flag.Args()[0]
 		stmts, err := Parse(filepath)
 		if err != nil {
+			os.Exit(1)
+		}
+		if err := TypeCheck(filepath, stmts); err != nil {
 			os.Exit(1)
 		}
 		os.Exit(Compile(filepath, stmts))
@@ -76,6 +80,22 @@ func Parse(path string) ([]ast.Statement, error) {
 	}
 
 	return statements, nil
+}
+
+func TypeCheck(path string, statements []ast.Statement) error {
+	resolver := type_checker.NewResolver(path, statements)
+	resolver.Resolve()
+
+	typeChecker := type_checker.NewTypeChecker(path, statements, resolver.DeclaredFunctions)
+	typeChecker.TypeCheck()
+	if typeChecker.HadErrors() {
+		for _, err := range typeChecker.Errors {
+			fmt.Fprintf(os.Stderr, err)
+		}
+		return errors.New("type check error.")
+	}
+
+	return nil
 }
 
 func Compile(path string, statements []ast.Statement) int {
