@@ -26,7 +26,7 @@ func TestResolveFunctionDeclaration(t *testing.T) {
 }
 
 func TestResolveFunctionArity(t *testing.T) {
-	input := "func f(a) { 1; } f(1,2,3);"
+	input := "func f(a: int) { 1; } f(1,2,3);"
 	lexer := lexer.New("script", input)
 	parser := parser.New(lexer)
 	stmts := parser.ParseProgram()

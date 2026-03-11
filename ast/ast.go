@@ -2,6 +2,11 @@ package ast
 
 import "github.com/simomu-github/sfflt_lang/token"
 
+type Type struct {
+	Name        token.Token
+	GenericType *Type
+}
+
 type Statement interface {
 	Visit(visitor StatementVisitor)
 }
@@ -30,9 +35,15 @@ func (v Var) Visit(visitor StatementVisitor) {
 }
 
 type Function struct {
-	Name   token.Token
-	Params []token.Token
-	Body   []Statement
+	Name       token.Token
+	Params     []FunctionParam
+	Body       []Statement
+	ReturnType *Type
+}
+
+type FunctionParam struct {
+	Name token.Token
+	Type Type
 }
 
 func (f Function) Visit(visitor StatementVisitor) {
