@@ -252,15 +252,15 @@ func (p *Parser) parseInclude() []ast.Statement {
 }
 
 func (p *Parser) parseStatement() ast.Statement {
-	if p.matchToken(token.IF) {
+	if p.currentToken.Type == token.IF {
 		return p.parseIf()
 	}
 
-	if p.matchToken(token.WHILE) {
+	if p.currentToken.Type == token.WHILE {
 		return p.parseWhile()
 	}
 
-	if p.matchToken(token.FOR) {
+	if p.currentToken.Type == token.FOR {
 		return p.parseFor()
 	}
 
@@ -300,6 +300,7 @@ func (p *Parser) parseReturn() ast.Statement {
 		return ast.Return{Value: nil}
 	}
 
+	returnToken := p.currentToken
 	p.nextToken()
 	expr := p.parseExpression()
 	if p.currentToken.Type != token.SEMICOLON {
@@ -307,7 +308,7 @@ func (p *Parser) parseReturn() ast.Statement {
 		return nil
 	}
 
-	return ast.Return{Value: expr}
+	return ast.Return{Token: returnToken, Value: expr}
 }
 
 func (p *Parser) parseBreak() ast.Statement {
@@ -327,6 +328,9 @@ func (p *Parser) parseBreak() ast.Statement {
 }
 
 func (p *Parser) parseIf() ast.Statement {
+	ifToken := p.currentToken
+	p.nextToken()
+
 	if p.currentToken.Type != token.LPAREN {
 		p.parseError(p.currentToken, "Expect '(' after if.")
 		return nil
@@ -349,10 +353,13 @@ func (p *Parser) parseIf() ast.Statement {
 		elseStmt = p.parseDeclaration()
 	}
 
-	return ast.If{Condition: condition, Then: thenStmt, Else: elseStmt}
+	return ast.If{Token: ifToken, Condition: condition, Then: thenStmt, Else: elseStmt}
 }
 
 func (p *Parser) parseWhile() ast.Statement {
+	whileToken := p.currentToken
+	p.nextToken()
+
 	p.beginLoop()
 
 	if p.currentToken.Type != token.LPAREN {
@@ -372,10 +379,13 @@ func (p *Parser) parseWhile() ast.Statement {
 	body := p.parseDeclaration()
 
 	p.endLoop()
-	return ast.While{Condition: condition, Body: body}
+	return ast.While{Token: whileToken, Condition: condition, Body: body}
 }
 
 func (p *Parser) parseFor() ast.Statement {
+	forToken := p.currentToken
+	p.nextToken()
+
 	p.beginScope()
 	p.beginLoop()
 
@@ -437,7 +447,7 @@ func (p *Parser) parseFor() ast.Statement {
 		condition = ast.BooleanLiteral{Value: true}
 	}
 
-	body = ast.While{Condition: condition, Body: body}
+	body = ast.While{Token: forToken, Condition: condition, Body: body}
 
 	if initializer != nil {
 		body = ast.Block{

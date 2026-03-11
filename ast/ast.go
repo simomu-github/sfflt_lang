@@ -51,6 +51,7 @@ func (f Function) Visit(visitor StatementVisitor) {
 }
 
 type Return struct {
+	Token token.Token
 	Value Expression
 }
 
@@ -67,6 +68,7 @@ func (b Break) Visit(visitor StatementVisitor) {
 }
 
 type If struct {
+	Token     token.Token
 	Condition Expression
 	Then      Statement
 	Else      Statement
@@ -77,6 +79,7 @@ func (i If) Visit(visitor StatementVisitor) {
 }
 
 type While struct {
+	Token     token.Token
 	Condition Expression
 	Body      Statement
 }

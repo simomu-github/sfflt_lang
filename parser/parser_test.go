@@ -718,6 +718,10 @@ func TestParseReturn(t *testing.T) {
 		t.Fatalf("Body is not Return")
 	}
 
+	if r.Token.Literal != "return" {
+		t.Fatalf("Return token is not match")
+	}
+
 	intLiteral, ok := r.Value.(ast.IntegerLiteral)
 
 	if !ok {
@@ -1027,6 +1031,10 @@ else
 		t.Fatalf("Statement is not if")
 	}
 
+	if ifStmt.Token.Literal != "if" {
+		t.Fatalf("If token is not match ")
+	}
+
 	condition, ok := ifStmt.Condition.(ast.BooleanLiteral)
 	if !ok {
 		t.Fatalf("condition is not BooleanLiteral")
@@ -1072,6 +1080,10 @@ func TestParseWhile(t *testing.T) {
 		t.Fatalf("Statement is not while")
 	}
 
+	if whileStmt.Token.Literal != "while" {
+		t.Fatalf("While token is not match")
+	}
+
 	condition, ok := whileStmt.Condition.(ast.BooleanLiteral)
 	if !ok {
 		t.Fatalf("condition is not BooleanLiteral")
@@ -1103,6 +1115,10 @@ func TestParseFor(t *testing.T) {
 	whileStmt, ok := stmt[0].(ast.While)
 	if !ok {
 		t.Fatalf("Statement is not while")
+	}
+
+	if whileStmt.Token.Literal != "for" {
+		t.Fatalf("For token is not match")
 	}
 
 	condition, ok := whileStmt.Condition.(ast.BooleanLiteral)
